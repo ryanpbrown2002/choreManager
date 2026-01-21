@@ -7,7 +7,7 @@ Built for small groups (houses, dorms, co-ops) who need a simple way to keep tra
 
 
 ## Project Structure
-
+```
 chore/
 ├── frontend/          # React + Vite + Tailwind
 │   ├── src/
@@ -25,3 +25,4 @@ chore/
 │   │   └── db/        # SQLite setup, migrations
 │   └── uploads/       # Temporary photo storage
 └── shared/            # Types/constants used by both
+```
