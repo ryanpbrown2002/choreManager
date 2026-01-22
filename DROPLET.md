@@ -6,7 +6,7 @@ This guide covers deploying and running the Chore Manager app on a DigitalOcean 
 
 - A DigitalOcean droplet (Ubuntu 22.04 or newer recommended)
 - SSH access to the droplet
-- The codebase uploaded to the droplet (e.g., at `/home/ryanpbrown/chore`)
+- The codebase uploaded to the droplet (e.g., at `/home/your-username/chore-manager`)
 
 ## Step 1: Install Node.js
 
@@ -41,7 +41,7 @@ sudo apt install -y build-essential python3
 ## Step 3: Set Up the Backend
 
 ```bash
-cd /home/ryanpbrown/chore/backend
+cd /home/your-username/chore-manager/backend
 
 # Install dependencies
 npm install
@@ -75,7 +75,7 @@ npm run migrate
 ## Step 4: Build the Frontend
 
 ```bash
-cd /home/ryanpbrown/chore/frontend
+cd /home/your-username/chore-manager/frontend
 
 # Install dependencies
 npm install
@@ -88,7 +88,7 @@ This creates a `dist/` folder with the production build.
 
 ## Step 5: Configure Backend to Serve Frontend
 
-Modify the backend to serve the frontend static files. Add this to `/home/ryanpbrown/chore/backend/src/server.js`:
+Modify the backend to serve the frontend static files. Add this to `/home/your-username/chore-manager/backend/src/server.js`:
 
 ```javascript
 // Add this after other middleware, before the error handler
@@ -116,7 +116,7 @@ sudo npm install -g pm2
 ## Step 7: Start the Application with PM2
 
 ```bash
-cd /home/ryanpbrown/chore/backend
+cd /home/your-username/chore-manager/backend
 
 # Start the app
 pm2 start src/server.js --name "chore-manager"
@@ -244,7 +244,7 @@ sudo lsof -i :3000
 ### Database issues
 
 ```bash
-cd /home/ryanpbrown/chore/backend
+cd /home/your-username/chore-manager/backend
 rm chore.db chore.db-shm chore.db-wal 2>/dev/null
 npm run migrate
 pm2 restart chore-manager
@@ -262,8 +262,8 @@ sudo tail -f /var/log/nginx/error.log  # View errors
 
 ```bash
 # Make sure the uploads directory exists and is writable
-mkdir -p /home/ryanpbrown/chore/backend/uploads
-chmod 755 /home/ryanpbrown/chore/backend/uploads
+mkdir -p /home/your-username/chore-manager/backend/uploads
+chmod 755 /home/your-username/chore-manager/backend/uploads
 ```
 
 ## Updating the Application
@@ -271,7 +271,7 @@ chmod 755 /home/ryanpbrown/chore/backend/uploads
 When you push new code to the droplet:
 
 ```bash
-cd /home/ryanpbrown/chore
+cd /home/your-username/chore-manager
 
 # Pull changes (if using git)
 git pull
