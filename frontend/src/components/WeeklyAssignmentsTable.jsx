@@ -80,45 +80,54 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-        <button
-          onClick={goToPreviousWeek}
-          className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 text-sm"
-        >
-          &larr; Prev
-        </button>
-        <div className="flex items-center gap-4">
+      {/* Header - Week Navigation */}
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+        {/* Week selector row */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={goToPreviousWeek}
+            className="p-2 sm:px-3 sm:py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700"
+          >
+            <span className="hidden sm:inline">&larr; Prev</span>
+            <span className="sm:hidden">&larr;</span>
+          </button>
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-base sm:text-xl font-semibold text-gray-900">
               {formatWeekRange(weekStart)}
             </h2>
             {!isCurrentWeek() && (
               <button
                 onClick={goToCurrentWeek}
-                className="text-sm text-blue-600 hover:text-blue-800"
+                className="text-xs sm:text-sm text-blue-600 hover:text-blue-800"
               >
                 Jump to Current Week
               </button>
             )}
           </div>
-          {isAdmin && (
+          <button
+            onClick={goToNextWeek}
+            className="p-2 sm:px-3 sm:py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700"
+          >
+            <span className="hidden sm:inline">Next &rarr;</span>
+            <span className="sm:hidden">&rarr;</span>
+          </button>
+        </div>
+        {/* Rotate button for admins */}
+        {isAdmin && (
+          <div className="mt-3 flex justify-center">
             <button
               onClick={handleRotate}
               disabled={rotating || !chores?.length || !members?.length}
-              className="px-3 py-1 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 text-sm"
+              className="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 text-sm"
             >
-              {rotating ? 'Rotating...' : 'Rotate All'}
+              {rotating ? 'Rotating...' : 'Rotate All Chores'}
             </button>
-          )}
-        </div>
-        <button
-          onClick={goToNextWeek}
-          className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 text-sm"
-        >
-          Next &rarr;
-        </button>
+          </div>
+        )}
       </div>
-      <div className="overflow-x-auto">
+
+      {/* Desktop Table View */}
+      <div className="hidden sm:block overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -203,6 +212,68 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="sm:hidden">
+        {weekAssignments.length === 0 ? (
+          <div className="px-4 py-8 text-center text-gray-500">
+            No assignments for this week
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-200">
+            {weekAssignments.map((assignment) => (
+              <div
+                key={assignment.id}
+                className={`p-4 ${isMyAssignment(assignment) ? 'bg-blue-50' : ''}`}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <div className="font-medium text-gray-900">{assignment.chore_name}</div>
+                    <div className="text-sm text-gray-600">{assignment.user_name}</div>
+                  </div>
+                  <span
+                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      assignment.status === 'completed'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}
+                  >
+                    {assignment.status}
+                  </span>
+                </div>
+                <div className="flex gap-3 mt-3">
+                  {isMyAssignment(assignment) && assignment.status === 'pending' && (
+                    <button
+                      onClick={() => onCompleteClick(assignment)}
+                      className="flex-1 py-2 px-3 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                    >
+                      Mark Complete
+                    </button>
+                  )}
+                  {assignment.status === 'completed' && assignment.photo_path && (
+                    <a
+                      href={`/${assignment.photo_path}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="py-2 px-3 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200"
+                    >
+                      View Photo
+                    </a>
+                  )}
+                  {user?.role === 'admin' && (
+                    <button
+                      onClick={() => handleDelete(assignment.id)}
+                      className="py-2 px-3 bg-red-100 text-red-700 text-sm rounded-md hover:bg-red-200"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

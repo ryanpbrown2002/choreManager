@@ -13,11 +13,11 @@ export default function Settings() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold mb-6">Settings</h1>
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Settings</h1>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Profile</h2>
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Profile</h2>
           <div className="space-y-3">
             <div>
               <label className="text-sm font-medium text-gray-600">Name</label>
@@ -25,7 +25,7 @@ export default function Settings() {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-600">Email</label>
-              <p className="text-gray-900">{user?.email}</p>
+              <p className="text-gray-900 break-all">{user?.email}</p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-600">Role</label>
@@ -34,8 +34,8 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Group Information</h2>
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Group Information</h2>
           <div className="space-y-3">
             <div>
               <label className="text-sm font-medium text-gray-600">Group Name</label>
@@ -43,10 +43,10 @@ export default function Settings() {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-600">Invite Code</label>
-              <p className="font-mono text-lg font-semibold text-blue-700">
+              <p className="font-mono text-base sm:text-lg font-semibold text-blue-700">
                 {group?.invite_code}
               </p>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">
                 Share this code with housemates to invite them to join
               </p>
             </div>

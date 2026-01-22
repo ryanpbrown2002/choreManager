@@ -85,13 +85,13 @@ export default function CompletionStats({ assignments, members, chores }) {
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-900">Completion Stats</h2>
+      <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Completion Stats</h2>
           <div className="flex gap-2">
             <button
               onClick={() => setViewMode('members')}
-              className={`px-3 py-1 rounded-md ${
+              className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm ${
                 viewMode === 'members'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -101,7 +101,7 @@ export default function CompletionStats({ assignments, members, chores }) {
             </button>
             <button
               onClick={() => setViewMode('chores')}
-              className={`px-3 py-1 rounded-md ${
+              className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm ${
                 viewMode === 'chores'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -113,7 +113,8 @@ export default function CompletionStats({ assignments, members, chores }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Desktop Table View */}
+      <div className="hidden sm:block overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -130,9 +131,6 @@ export default function CompletionStats({ assignments, members, chores }) {
                 Pending
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Overdue
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Completion Rate
               </th>
             </tr>
@@ -140,7 +138,7 @@ export default function CompletionStats({ assignments, members, chores }) {
           <tbody className="bg-white divide-y divide-gray-200">
             {currentStats.length === 0 ? (
               <tr>
-                <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
                   No stats available
                 </td>
               </tr>
@@ -160,9 +158,6 @@ export default function CompletionStats({ assignments, members, chores }) {
                     <div className="text-sm text-yellow-600">{stat.pending}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-red-600">{stat.overdue}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="text-sm font-semibold text-gray-900 mr-2">
                         {stat.completionRate}%
@@ -180,6 +175,37 @@ export default function CompletionStats({ assignments, members, chores }) {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="sm:hidden">
+        {currentStats.length === 0 ? (
+          <div className="px-4 py-8 text-center text-gray-500">
+            No stats available
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-200">
+            {currentStats.map((stat, index) => (
+              <div key={index} className="p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium text-gray-900">{stat.name}</span>
+                  <span className="text-sm font-semibold text-gray-900">{stat.completionRate}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                  <div
+                    className="bg-green-600 h-2 rounded-full"
+                    style={{ width: `${stat.completionRate}%` }}
+                  ></div>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Total: {stat.total}</span>
+                  <span className="text-green-600">Done: {stat.completed}</span>
+                  <span className="text-yellow-600">Pending: {stat.pending}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
