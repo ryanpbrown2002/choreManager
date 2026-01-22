@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../api/client';
+import { getCurrentWeekStart, getWeekStartTimestamp } from '../utils/dateUtils';
 
 export default function AssignmentManager({ chores, members, onAssignmentsChange }) {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [showForm, setShowForm] = useState(false);
+  const [formWeekStart, setFormWeekStart] = useState(getCurrentWeekStart());
   const [formData, setFormData] = useState({
     choreId: '',
-    userId: '',
-    daysUntilDue: 7
+    userId: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -20,17 +21,15 @@ export default function AssignmentManager({ chores, members, onAssignmentsChange
     setLoading(true);
 
     try {
-      const now = Math.floor(Date.now() / 1000);
-      const dueDate = now + (formData.daysUntilDue * 24 * 60 * 60);
+      const weekStart = getWeekStartTimestamp(formWeekStart);
 
       await api.post('/assignments', {
         choreId: formData.choreId,
         userId: formData.userId,
-        assignedDate: now,
-        dueDate: dueDate
+        weekStart
       });
 
-      setFormData({ choreId: '', userId: '', daysUntilDue: 7 });
+      setFormData({ choreId: '', userId: '' });
       setShowForm(false);
       onAssignmentsChange();
     } catch (err) {
@@ -40,22 +39,16 @@ export default function AssignmentManager({ chores, members, onAssignmentsChange
     }
   };
 
-  const handleRotate = async () => {
-    if (!window.confirm('Rotate all chores to the next person? This will create new assignments for everyone.')) {
-      return;
-    }
+  const formatWeekLabel = (date) => {
+    const weekEnd = new Date(date);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    return `${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  };
 
-    setError('');
-    setLoading(true);
-
-    try {
-      await api.post('/assignments/rotate');
-      onAssignmentsChange();
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to rotate assignments');
-    } finally {
-      setLoading(false);
-    }
+  const changeWeek = (current, delta) => {
+    const newDate = new Date(current);
+    newDate.setDate(newDate.getDate() + (delta * 7));
+    setFormWeekStart(newDate);
   };
 
   if (!isAdmin) {
@@ -65,22 +58,13 @@ export default function AssignmentManager({ chores, members, onAssignmentsChange
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-gray-900">Assign Chores</h2>
-        <div className="flex gap-2">
-          <button
-            onClick={handleRotate}
-            disabled={loading || chores.length === 0 || members.length === 0}
-            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50"
-          >
-            Rotate All Chores
-          </button>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            {showForm ? 'Cancel' : 'Manual Assignment'}
-          </button>
-        </div>
+        <h2 className="text-xl font-semibold text-gray-900">Manual Assignment</h2>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          {showForm ? 'Cancel' : 'New Assignment'}
+        </button>
       </div>
 
       {error && (
@@ -130,16 +114,27 @@ export default function AssignmentManager({ chores, members, onAssignmentsChange
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Days Until Due *
+                Week *
               </label>
-              <input
-                type="number"
-                min="1"
-                required
-                value={formData.daysUntilDue}
-                onChange={(e) => setFormData({ ...formData, daysUntilDue: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => changeWeek(formWeekStart, -1)}
+                  className="px-2 py-2 border rounded hover:bg-gray-100"
+                >
+                  &lt;
+                </button>
+                <span className="text-sm min-w-[120px] text-center">
+                  {formatWeekLabel(formWeekStart)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => changeWeek(formWeekStart, 1)}
+                  className="px-2 py-2 border rounded hover:bg-gray-100"
+                >
+                  &gt;
+                </button>
+              </div>
             </div>
           </div>
 
@@ -162,10 +157,9 @@ export default function AssignmentManager({ chores, members, onAssignmentsChange
         </form>
       )}
 
-      <div className="mt-4 text-sm text-gray-600">
-        <p><strong>Manual Assignment:</strong> Assign a specific chore to a specific person</p>
-        <p><strong>Rotate All Chores:</strong> Automatically rotate all chores to the next person in sequence</p>
-      </div>
+      <p className="mt-4 text-sm text-gray-600">
+        Assign a specific chore to a specific person for a selected week.
+      </p>
     </div>
   );
 }

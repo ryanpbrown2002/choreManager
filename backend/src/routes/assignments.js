@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { Assignment, Chore, User } from '../models/index.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
-import { generateId, getCurrentTimestamp, getDaysFromNow } from '../utils/index.js';
+import { generateId } from '../utils/index.js';
 
 const router = express.Router();
 
@@ -79,10 +79,10 @@ router.get('/:id', (req, res) => {
 
 router.post('/', requireAdmin, (req, res) => {
   try {
-    const { choreId, userId, assignedDate, dueDate } = req.body;
+    const { choreId, userId, weekStart } = req.body;
 
-    if (!choreId || !userId || !assignedDate || !dueDate) {
-      return res.status(400).json({ error: 'All fields are required' });
+    if (!choreId || !userId || !weekStart) {
+      return res.status(400).json({ error: 'choreId, userId, and weekStart are required' });
     }
 
     const chore = Chore.findById(choreId);
@@ -99,8 +99,7 @@ router.post('/', requireAdmin, (req, res) => {
       id: assignmentId,
       choreId,
       userId,
-      assignedDate,
-      dueDate
+      weekStart
     });
 
     const assignment = Assignment.findById(assignmentId);
@@ -162,6 +161,12 @@ router.delete('/:id', requireAdmin, (req, res) => {
 
 router.post('/rotate', requireAdmin, (req, res) => {
   try {
+    const { weekStart } = req.body;
+
+    if (!weekStart) {
+      return res.status(400).json({ error: 'weekStart is required' });
+    }
+
     const chores = Chore.findByGroup(req.groupId);
     const members = User.findByGroup(req.groupId);
 
@@ -175,7 +180,7 @@ router.post('/rotate', requireAdmin, (req, res) => {
 
     const currentAssignments = Assignment.findByGroup(req.groupId);
 
-    // Build a map of chore -> last assigned user
+    // Build a map of chore -> last assigned user (most recent assignment)
     const choreToLastUser = {};
     currentAssignments.forEach(assignment => {
       if (!choreToLastUser[assignment.chore_id]) {
@@ -183,7 +188,6 @@ router.post('/rotate', requireAdmin, (req, res) => {
       }
     });
 
-    const now = getCurrentTimestamp();
     const createdAssignments = [];
 
     chores.forEach((chore) => {
@@ -195,33 +199,13 @@ router.post('/rotate', requireAdmin, (req, res) => {
       const nextUserIndex = lastUserIndex === -1 ? 0 : (lastUserIndex + 1) % members.length;
       const nextUser = members[nextUserIndex];
 
-      // Calculate due date based on frequency
-      let daysUntilDue = 7; // default to weekly
-      switch (chore.frequency) {
-        case 'daily':
-          daysUntilDue = 1;
-          break;
-        case 'weekly':
-          daysUntilDue = 7;
-          break;
-        case 'biweekly':
-          daysUntilDue = 14;
-          break;
-        case 'monthly':
-          daysUntilDue = 30;
-          break;
-      }
-
-      const dueDate = getDaysFromNow(daysUntilDue);
-
-      // Create new assignment
+      // Create new assignment for the specified week
       const assignmentId = generateId();
       Assignment.create({
         id: assignmentId,
         choreId: chore.id,
         userId: nextUser.id,
-        assignedDate: now,
-        dueDate: dueDate
+        weekStart
       });
 
       createdAssignments.push(Assignment.findById(assignmentId));

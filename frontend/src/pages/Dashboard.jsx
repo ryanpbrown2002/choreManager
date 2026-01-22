@@ -6,7 +6,6 @@ import Layout from '../components/Layout';
 import WeeklyAssignmentsTable from '../components/WeeklyAssignmentsTable';
 import CompleteChoreModal from '../components/CompleteChoreModal';
 import AssignmentManager from '../components/AssignmentManager';
-import WeekNavigator from '../components/WeekNavigator';
 import CompletionStats from '../components/CompletionStats';
 
 export default function Dashboard() {
@@ -48,16 +47,14 @@ export default function Dashboard() {
           />
         )}
 
-        <WeekNavigator
-          currentWeekStart={currentWeekStart}
-          onWeekChange={setCurrentWeekStart}
-        />
-
         <WeeklyAssignmentsTable
           assignments={assignments}
           onCompleteClick={handleCompleteClick}
           onAssignmentsChange={refetchAssignments}
           weekStart={currentWeekStart}
+          onWeekChange={setCurrentWeekStart}
+          chores={chores}
+          members={members}
         />
 
         <CompletionStats

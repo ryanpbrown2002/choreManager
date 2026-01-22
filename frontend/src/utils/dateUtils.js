@@ -17,14 +17,14 @@ export const getCurrentWeekStart = () => {
   return weekStart;
 };
 
-export const isInWeek = (timestamp, weekStart) => {
-  const date = new Date(timestamp * 1000);
-  const { weekEnd } = getWeekBounds(weekStart);
-  return date >= weekStart && date <= weekEnd;
+export const getWeekStartTimestamp = (date) => {
+  const { weekStart } = getWeekBounds(date);
+  return Math.floor(weekStart.getTime() / 1000);
 };
 
 export const filterAssignmentsByWeek = (assignments, weekStart) => {
+  const weekStartTimestamp = Math.floor(weekStart.getTime() / 1000);
   return assignments.filter(assignment =>
-    isInWeek(assignment.due_date, weekStart)
+    assignment.week_start === weekStartTimestamp
   );
 };

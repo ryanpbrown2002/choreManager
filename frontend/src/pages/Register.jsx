@@ -114,6 +114,9 @@ export default function Register() {
                 onChange={handleChange}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
+              <p className="mt-1 text-xs text-amber-600">
+                Warning: Do not use a password you use elsewhere. This application may have security vulnerabilities.
+              </p>
             </div>
 
             {mode === 'create' ? (

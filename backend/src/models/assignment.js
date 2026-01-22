@@ -11,7 +11,7 @@ export const Assignment = {
        FROM assignments a
        JOIN chores c ON a.chore_id = c.id
        WHERE a.user_id = ?
-       ORDER BY a.due_date ASC`
+       ORDER BY a.week_start ASC`
     ).all(userId);
   },
 
@@ -21,7 +21,7 @@ export const Assignment = {
        FROM assignments a
        JOIN users u ON a.user_id = u.id
        WHERE a.chore_id = ?
-       ORDER BY a.assigned_date DESC`
+       ORDER BY a.week_start DESC`
     ).all(choreId);
   },
 
@@ -32,7 +32,7 @@ export const Assignment = {
        JOIN chores c ON a.chore_id = c.id
        JOIN users u ON a.user_id = u.id
        WHERE c.group_id = ?
-       ORDER BY a.due_date ASC`
+       ORDER BY a.week_start ASC`
     ).all(groupId);
   },
 
@@ -42,26 +42,15 @@ export const Assignment = {
        FROM assignments a
        JOIN chores c ON a.chore_id = c.id
        WHERE a.user_id = ? AND a.status = 'pending'
-       ORDER BY a.due_date ASC`
+       ORDER BY a.week_start ASC`
     ).all(userId);
   },
 
-  findOverdue() {
-    const now = Math.floor(Date.now() / 1000);
+  create({ id, choreId, userId, weekStart }) {
     return db.prepare(
-      `SELECT a.*, c.name as chore_name, u.name as user_name, u.email
-       FROM assignments a
-       JOIN chores c ON a.chore_id = c.id
-       JOIN users u ON a.user_id = u.id
-       WHERE a.status = 'pending' AND a.due_date < ?`
-    ).all(now);
-  },
-
-  create({ id, choreId, userId, assignedDate, dueDate }) {
-    return db.prepare(
-      `INSERT INTO assignments (id, chore_id, user_id, assigned_date, due_date)
-       VALUES (?, ?, ?, ?, ?)`
-    ).run(id, choreId, userId, assignedDate, dueDate);
+      `INSERT INTO assignments (id, chore_id, user_id, week_start)
+       VALUES (?, ?, ?, ?)`
+    ).run(id, choreId, userId, weekStart);
   },
 
   complete(id, photoPath = null) {
@@ -71,12 +60,6 @@ export const Assignment = {
        SET status = 'completed', completed_at = ?, photo_path = ?
        WHERE id = ?`
     ).run(completedAt, photoPath, id);
-  },
-
-  markOverdue(id) {
-    return db.prepare(
-      `UPDATE assignments SET status = 'overdue' WHERE id = ?`
-    ).run(id);
   },
 
   delete(id) {

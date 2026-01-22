@@ -34,11 +34,10 @@ CREATE TABLE IF NOT EXISTS assignments (
   id TEXT PRIMARY KEY,
   chore_id TEXT NOT NULL,
   user_id TEXT NOT NULL,
-  assigned_date INTEGER NOT NULL,
-  due_date INTEGER NOT NULL,
+  week_start INTEGER NOT NULL,
   completed_at INTEGER,
   photo_path TEXT,
-  status TEXT NOT NULL CHECK(status IN ('pending', 'completed', 'overdue')) DEFAULT 'pending',
+  status TEXT NOT NULL CHECK(status IN ('pending', 'completed')) DEFAULT 'pending',
   created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
   FOREIGN KEY (chore_id) REFERENCES chores(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -51,4 +50,4 @@ CREATE INDEX IF NOT EXISTS idx_chores_group ON chores(group_id);
 CREATE INDEX IF NOT EXISTS idx_assignments_chore ON assignments(chore_id);
 CREATE INDEX IF NOT EXISTS idx_assignments_user ON assignments(user_id);
 CREATE INDEX IF NOT EXISTS idx_assignments_status ON assignments(status);
-CREATE INDEX IF NOT EXISTS idx_assignments_due_date ON assignments(due_date);
+CREATE INDEX IF NOT EXISTS idx_assignments_week_start ON assignments(week_start);
