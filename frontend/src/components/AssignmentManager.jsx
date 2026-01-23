@@ -56,9 +56,9 @@ export default function AssignmentManager({ chores, members, onAssignmentsChange
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Manual Assignment</h2>
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Manual Assignment</h2>
         <button
           onClick={() => setShowForm(!showForm)}
           className="px-3 sm:px-4 py-2 bg-blue-600 text-white text-sm sm:text-base rounded-md hover:bg-blue-700"
@@ -68,21 +68,21 @@ export default function AssignmentManager({ chores, members, onAssignmentsChange
       </div>
 
       {error && (
-        <div className="mb-4 bg-red-50 text-red-600 p-3 rounded text-sm">{error}</div>
+        <div className="mb-4 bg-red-50 dark:bg-red-900/50 text-red-600 dark:text-red-400 p-3 rounded text-sm">{error}</div>
       )}
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="p-3 sm:p-4 border rounded-lg bg-gray-50">
+        <form onSubmit={handleSubmit} className="p-3 sm:p-4 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Chore *
               </label>
               <select
                 required
                 value={formData.choreId}
                 onChange={(e) => setFormData({ ...formData, choreId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-base"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-base bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
               >
                 <option value="">Select chore</option>
                 {chores.map((chore) => (
@@ -94,14 +94,14 @@ export default function AssignmentManager({ chores, members, onAssignmentsChange
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Assign To *
               </label>
               <select
                 required
                 value={formData.userId}
                 onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-base"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-base bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
               >
                 <option value="">Select member</option>
                 {members.map((member) => (
@@ -113,24 +113,24 @@ export default function AssignmentManager({ chores, members, onAssignmentsChange
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Week *
               </label>
               <div className="flex items-center justify-center sm:justify-start gap-2">
                 <button
                   type="button"
                   onClick={() => changeWeek(formWeekStart, -1)}
-                  className="px-3 py-2 border rounded hover:bg-gray-100"
+                  className="px-3 py-2 border dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
                 >
                   &lt;
                 </button>
-                <span className="text-sm min-w-[120px] text-center">
+                <span className="text-sm min-w-[120px] text-center text-gray-900 dark:text-white">
                   {formatWeekLabel(formWeekStart)}
                 </span>
                 <button
                   type="button"
                   onClick={() => changeWeek(formWeekStart, 1)}
-                  className="px-3 py-2 border rounded hover:bg-gray-100"
+                  className="px-3 py-2 border dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
                 >
                   &gt;
                 </button>
@@ -149,7 +149,7 @@ export default function AssignmentManager({ chores, members, onAssignmentsChange
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              className="w-full sm:w-auto px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
             >
               Cancel
             </button>
@@ -157,7 +157,7 @@ export default function AssignmentManager({ chores, members, onAssignmentsChange
         </form>
       )}
 
-      <p className="mt-4 text-sm text-gray-600 hidden sm:block">
+      <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
         Assign a specific chore to a specific person for a selected week.
       </p>
     </div>

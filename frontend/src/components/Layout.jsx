@@ -13,29 +13,29 @@ export default function Layout({ children }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <nav className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-14 sm:h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <Link to="/" className="text-lg sm:text-xl font-bold text-gray-900">
+              <Link to="/" className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
                 Chore Manager
               </Link>
             </div>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-4">
-              <Link to="/" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md">
+              <Link to="/" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md">
                 Dashboard
               </Link>
-              <Link to="/settings" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md">
+              <Link to="/settings" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md">
                 Settings
               </Link>
-              <span className="text-gray-700 ml-4">
+              <span className="text-gray-700 dark:text-gray-300 ml-4">
                 {user?.name}
                 {user?.role === 'admin' && (
-                  <span className="ml-2 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                  <span className="ml-2 text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-1 rounded-full">
                     Admin
                   </span>
                 )}
@@ -52,7 +52,7 @@ export default function Layout({ children }) {
             <div className="md:hidden flex items-center">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-md text-gray-700 hover:bg-gray-100"
+                className="p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {mobileMenuOpen ? (
@@ -68,12 +68,12 @@ export default function Layout({ children }) {
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white">
+          <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <div className="px-4 py-3 space-y-2">
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-gray-900 font-medium">{user?.name}</span>
+              <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                <span className="text-gray-900 dark:text-white font-medium">{user?.name}</span>
                 {user?.role === 'admin' && (
-                  <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                  <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-1 rounded-full">
                     Admin
                   </span>
                 )}
@@ -81,14 +81,14 @@ export default function Layout({ children }) {
               <Link
                 to="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-gray-700 hover:text-gray-900"
+                className="block py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
               >
                 Dashboard
               </Link>
               <Link
                 to="/settings"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-gray-700 hover:text-gray-900"
+                className="block py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
               >
                 Settings
               </Link>

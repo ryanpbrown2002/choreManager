@@ -79,26 +79,26 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
   };
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
       {/* Header - Week Navigation */}
-      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
         {/* Week selector row */}
         <div className="flex items-center justify-between">
           <button
             onClick={goToPreviousWeek}
-            className="p-2 sm:px-3 sm:py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700"
+            className="p-2 sm:px-3 sm:py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md text-gray-700 dark:text-gray-300"
           >
             <span className="hidden sm:inline">&larr; Prev</span>
             <span className="sm:hidden">&larr;</span>
           </button>
           <div className="text-center">
-            <h2 className="text-base sm:text-xl font-semibold text-gray-900">
+            <h2 className="text-base sm:text-xl font-semibold text-gray-900 dark:text-white">
               {formatWeekRange(weekStart)}
             </h2>
             {!isCurrentWeek() && (
               <button
                 onClick={goToCurrentWeek}
-                className="text-xs sm:text-sm text-blue-600 hover:text-blue-800"
+                className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
               >
                 Jump to Current Week
               </button>
@@ -106,7 +106,7 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
           </div>
           <button
             onClick={goToNextWeek}
-            className="p-2 sm:px-3 sm:py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700"
+            className="p-2 sm:px-3 sm:py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md text-gray-700 dark:text-gray-300"
           >
             <span className="hidden sm:inline">Next &rarr;</span>
             <span className="sm:hidden">&rarr;</span>
@@ -128,27 +128,27 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
 
       {/* Desktop Table View */}
       <div className="hidden sm:block overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Chore
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Assigned To
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {weekAssignments.length === 0 ? (
               <tr>
-                <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                <td colSpan="4" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                   No assignments for this week
                 </td>
               </tr>
@@ -156,22 +156,22 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
               weekAssignments.map((assignment) => (
                 <tr
                   key={assignment.id}
-                  className={`${isMyAssignment(assignment) ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                  className={`${isMyAssignment(assignment) ? 'bg-blue-50 dark:bg-blue-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                 >
                   <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
                       {assignment.chore_name}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{assignment.user_name}</div>
+                    <div className="text-sm text-gray-900 dark:text-white">{assignment.user_name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         assignment.status === 'completed'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
+                          ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300'
+                          : 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300'
                       }`}
                     >
                       {assignment.status}
@@ -182,7 +182,7 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
                       {isMyAssignment(assignment) && assignment.status === 'pending' && (
                         <button
                           onClick={() => onCompleteClick(assignment)}
-                          className="text-blue-600 hover:text-blue-900 font-medium"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 font-medium"
                         >
                           Mark Complete
                         </button>
@@ -192,7 +192,7 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
                           href={`/${assignment.photo_path}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
                         >
                           View Photo
                         </a>
@@ -200,7 +200,7 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
                       {user?.role === 'admin' && (
                         <button
                           onClick={() => handleDelete(assignment.id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                         >
                           Delete
                         </button>
@@ -217,26 +217,26 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
       {/* Mobile Card View */}
       <div className="sm:hidden">
         {weekAssignments.length === 0 ? (
-          <div className="px-4 py-8 text-center text-gray-500">
+          <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
             No assignments for this week
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {weekAssignments.map((assignment) => (
               <div
                 key={assignment.id}
-                className={`p-4 ${isMyAssignment(assignment) ? 'bg-blue-50' : ''}`}
+                className={`p-4 ${isMyAssignment(assignment) ? 'bg-blue-50 dark:bg-blue-900/30' : ''}`}
               >
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <div className="font-medium text-gray-900">{assignment.chore_name}</div>
-                    <div className="text-sm text-gray-600">{assignment.user_name}</div>
+                    <div className="font-medium text-gray-900 dark:text-white">{assignment.chore_name}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-300">{assignment.user_name}</div>
                   </div>
                   <span
                     className={`px-2 py-1 text-xs font-semibold rounded-full ${
                       assignment.status === 'completed'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
+                        ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300'
+                        : 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300'
                     }`}
                   >
                     {assignment.status}
@@ -256,7 +256,7 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
                       href={`/${assignment.photo_path}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="py-2 px-3 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200"
+                      className="py-2 px-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
                     >
                       View Photo
                     </a>
@@ -264,7 +264,7 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
                   {user?.role === 'admin' && (
                     <button
                       onClick={() => handleDelete(assignment.id)}
-                      className="py-2 px-3 bg-red-100 text-red-700 text-sm rounded-md hover:bg-red-200"
+                      className="py-2 px-3 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 text-sm rounded-md hover:bg-red-200 dark:hover:bg-red-900"
                     >
                       Delete
                     </button>

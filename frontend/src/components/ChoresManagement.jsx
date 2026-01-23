@@ -54,13 +54,13 @@ export default function ChoresManagement({ chores, onCreateChore, onUpdateChore,
 
   if (!isAdmin) {
     return (
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">Chores</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">Chores</h2>
         <div className="space-y-2">
           {chores.map((chore) => (
-            <div key={chore.id} className="border-b pb-2">
-              <div className="font-medium">{chore.name}</div>
-              <div className="text-sm text-gray-600">
+            <div key={chore.id} className="border-b dark:border-gray-700 pb-2">
+              <div className="font-medium text-gray-900 dark:text-white">{chore.name}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 {chore.frequency}
                 {chore.requires_photo === 1 && ' • Photo required'}
               </div>
@@ -72,9 +72,9 @@ export default function ChoresManagement({ chores, onCreateChore, onUpdateChore,
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Manage Chores</h2>
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Manage Chores</h2>
         <button
           onClick={() => setShowForm(!showForm)}
           className="px-3 sm:px-4 py-2 bg-blue-600 text-white text-sm sm:text-base rounded-md hover:bg-blue-700"
@@ -84,10 +84,10 @@ export default function ChoresManagement({ chores, onCreateChore, onUpdateChore,
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-6 p-3 sm:p-4 border rounded-lg bg-gray-50">
+        <form onSubmit={handleSubmit} className="mb-6 p-3 sm:p-4 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Chore Name *
               </label>
               <input
@@ -95,18 +95,18 @@ export default function ChoresManagement({ chores, onCreateChore, onUpdateChore,
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-base"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-base bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Frequency *
               </label>
               <select
                 value={formData.frequency}
                 onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-base"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-base bg-white dark:bg-gray-600 text-gray-900 dark:text-white"
               >
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
@@ -123,7 +123,7 @@ export default function ChoresManagement({ chores, onCreateChore, onUpdateChore,
                   onChange={(e) => setFormData({ ...formData, requiresPhoto: e.target.checked })}
                   className="mr-2 h-4 w-4"
                 />
-                <span className="text-sm font-medium text-gray-700">Require photo verification</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Require photo verification</span>
               </label>
             </div>
           </div>
@@ -138,7 +138,7 @@ export default function ChoresManagement({ chores, onCreateChore, onUpdateChore,
             <button
               type="button"
               onClick={resetForm}
-              className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              className="w-full sm:w-auto px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
             >
               Cancel
             </button>
@@ -148,10 +148,10 @@ export default function ChoresManagement({ chores, onCreateChore, onUpdateChore,
 
       <div className="space-y-2">
         {chores.map((chore) => (
-          <div key={chore.id} className="flex justify-between items-start border-b pb-3 pt-1">
+          <div key={chore.id} className="flex justify-between items-start border-b dark:border-gray-700 pb-3 pt-1">
             <div className="flex-1 min-w-0">
-              <div className="font-medium">{chore.name}</div>
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="font-medium text-gray-900 dark:text-white">{chore.name}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {chore.frequency}
                 {chore.requires_photo === 1 && ' • Photo required'}
               </div>
@@ -159,13 +159,13 @@ export default function ChoresManagement({ chores, onCreateChore, onUpdateChore,
             <div className="flex gap-3 ml-2">
               <button
                 onClick={() => handleEdit(chore)}
-                className="text-blue-600 hover:text-blue-800 text-sm"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
               >
                 Edit
               </button>
               <button
                 onClick={() => handleDelete(chore.id)}
-                className="text-red-600 hover:text-red-800 text-sm"
+                className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm"
               >
                 Delete
               </button>

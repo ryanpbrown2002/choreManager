@@ -42,20 +42,20 @@ export default function CompleteChoreModal({ assignment, onComplete, onClose }) 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl sm:text-2xl font-bold mb-4">Complete Chore</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <h2 className="text-xl sm:text-2xl font-bold mb-4 text-gray-900 dark:text-white">Complete Chore</h2>
 
         <div className="mb-4">
-          <h3 className="font-semibold text-lg">{assignment.chore_name}</h3>
+          <h3 className="font-semibold text-lg text-gray-900 dark:text-white">{assignment.chore_name}</h3>
         </div>
 
         <form onSubmit={handleSubmit}>
           {error && (
-            <div className="mb-4 bg-red-50 text-red-600 p-3 rounded text-sm">{error}</div>
+            <div className="mb-4 bg-red-50 dark:bg-red-900/50 text-red-600 dark:text-red-400 p-3 rounded text-sm">{error}</div>
           )}
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {assignment.requires_photo ? 'Take Photo *' : 'Add Photo (optional)'}
             </label>
             <input
@@ -63,14 +63,14 @@ export default function CompleteChoreModal({ assignment, onComplete, onClose }) 
               accept="image/*"
               capture="environment"
               onChange={handleFileChange}
-              className="block w-full text-sm text-gray-500
+              className="block w-full text-sm text-gray-500 dark:text-gray-400
                 file:mr-4 file:py-3 file:px-4
                 file:rounded-md file:border-0
                 file:text-sm file:font-semibold
-                file:bg-blue-50 file:text-blue-700
-                hover:file:bg-blue-100"
+                file:bg-blue-50 dark:file:bg-blue-900/50 file:text-blue-700 dark:file:text-blue-300
+                hover:file:bg-blue-100 dark:hover:file:bg-blue-900"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Tap to open camera or select from gallery
             </p>
           </div>
@@ -89,7 +89,7 @@ export default function CompleteChoreModal({ assignment, onComplete, onClose }) 
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               disabled={loading}
             >
               Cancel

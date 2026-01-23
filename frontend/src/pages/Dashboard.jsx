@@ -34,9 +34,9 @@ export default function Dashboard() {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{group?.name || 'Loading...'}</h1>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">Welcome back, {user?.name}!</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{group?.name || 'Loading...'}</h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-1 text-sm sm:text-base">Welcome back, {user?.name}!</p>
         </div>
 
         {user?.role === 'admin' && (
