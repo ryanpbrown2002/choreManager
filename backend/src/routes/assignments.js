@@ -118,7 +118,10 @@ router.post('/:id/complete', upload.single('photo'), (req, res) => {
       return res.status(404).json({ error: 'Assignment not found' });
     }
 
-    if (assignment.user_id !== req.userId) {
+    const isAdmin = req.userRole === 'admin';
+    const isOwnAssignment = assignment.user_id === req.userId;
+
+    if (!isOwnAssignment && !isAdmin) {
       return res.status(403).json({ error: 'Can only complete your own assignments' });
     }
 
@@ -128,7 +131,8 @@ router.post('/:id/complete', upload.single('photo'), (req, res) => {
 
     const chore = Chore.findById(assignment.chore_id);
 
-    if (chore.requires_photo && !req.file) {
+    // Only require photo for non-admin users completing their own chores
+    if (chore.requires_photo && !req.file && !isAdmin) {
       return res.status(400).json({ error: 'Photo verification required for this chore' });
     }
 
@@ -140,6 +144,28 @@ router.post('/:id/complete', upload.single('photo'), (req, res) => {
   } catch (error) {
     console.error('Complete assignment error:', error);
     res.status(500).json({ error: 'Failed to complete assignment' });
+  }
+});
+
+router.post('/:id/reject', requireAdmin, (req, res) => {
+  try {
+    const assignment = Assignment.findById(req.params.id);
+
+    if (!assignment) {
+      return res.status(404).json({ error: 'Assignment not found' });
+    }
+
+    if (assignment.status !== 'completed') {
+      return res.status(400).json({ error: 'Can only reject completed assignments' });
+    }
+
+    Assignment.reject(req.params.id);
+
+    const updated = Assignment.findById(req.params.id);
+    res.json(updated);
+  } catch (error) {
+    console.error('Reject assignment error:', error);
+    res.status(500).json({ error: 'Failed to reject assignment' });
   }
 });
 

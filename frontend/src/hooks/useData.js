@@ -113,7 +113,19 @@ export function useAssignments() {
     return response.data;
   };
 
-  return { assignments, loading, error, refetch: fetchAssignments, completeAssignment };
+  const adminCompleteAssignment = async (id) => {
+    const response = await api.post(`/assignments/${id}/complete`);
+    await fetchAssignments();
+    return response.data;
+  };
+
+  const rejectAssignment = async (id) => {
+    const response = await api.post(`/assignments/${id}/reject`);
+    await fetchAssignments();
+    return response.data;
+  };
+
+  return { assignments, loading, error, refetch: fetchAssignments, completeAssignment, adminCompleteAssignment, rejectAssignment };
 }
 
 export function useGroup() {

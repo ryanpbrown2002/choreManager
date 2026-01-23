@@ -12,7 +12,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { members } = useMembers();
   const { chores } = useChores();
-  const { assignments, completeAssignment, refetch: refetchAssignments } = useAssignments();
+  const { assignments, completeAssignment, adminCompleteAssignment, rejectAssignment, refetch: refetchAssignments } = useAssignments();
   const { group } = useGroup();
 
   const [selectedAssignment, setSelectedAssignment] = useState(null);
@@ -29,6 +29,14 @@ export default function Dashboard() {
 
   const handleCloseModal = () => {
     setSelectedAssignment(null);
+  };
+
+  const handleAdminComplete = async (assignmentId) => {
+    await adminCompleteAssignment(assignmentId);
+  };
+
+  const handleReject = async (assignmentId) => {
+    await rejectAssignment(assignmentId);
   };
 
   return (
@@ -50,6 +58,8 @@ export default function Dashboard() {
         <WeeklyAssignmentsTable
           assignments={assignments}
           onCompleteClick={handleCompleteClick}
+          onAdminComplete={handleAdminComplete}
+          onReject={handleReject}
           onAssignmentsChange={refetchAssignments}
           weekStart={currentWeekStart}
           onWeekChange={setCurrentWeekStart}

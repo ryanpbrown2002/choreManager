@@ -62,6 +62,14 @@ export const Assignment = {
     ).run(completedAt, photoPath, id);
   },
 
+  reject(id) {
+    return db.prepare(
+      `UPDATE assignments
+       SET status = 'pending', completed_at = NULL, photo_path = NULL
+       WHERE id = ?`
+    ).run(id);
+  },
+
   delete(id) {
     return db.prepare('DELETE FROM assignments WHERE id = ?').run(id);
   }

@@ -3,9 +3,11 @@ import { useAuth } from '../hooks/useAuth';
 import { api } from '../api/client';
 import { filterAssignmentsByWeek, getWeekBounds, getWeekStartTimestamp } from '../utils/dateUtils';
 
-export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, onAssignmentsChange, weekStart, onWeekChange, chores, members }) {
+export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, onAdminComplete, onReject, onAssignmentsChange, weekStart, onWeekChange, chores, members }) {
   const { user } = useAuth();
   const [rotating, setRotating] = useState(false);
+  const [completing, setCompleting] = useState(null);
+  const [rejecting, setRejecting] = useState(null);
   const isAdmin = user?.role === 'admin';
 
   // Filter assignments by the selected week
@@ -44,6 +46,34 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
 
   const isMyAssignment = (assignment) => {
     return assignment.user_id === user?.id;
+  };
+
+  const handleAdminComplete = async (assignmentId) => {
+    if (!window.confirm('Mark this chore as complete?')) {
+      return;
+    }
+    setCompleting(assignmentId);
+    try {
+      await onAdminComplete(assignmentId);
+    } catch (err) {
+      console.error('Failed to complete assignment:', err);
+    } finally {
+      setCompleting(null);
+    }
+  };
+
+  const handleReject = async (assignmentId) => {
+    if (!window.confirm('Reject this completion? The chore will be marked as pending again.')) {
+      return;
+    }
+    setRejecting(assignmentId);
+    try {
+      await onReject(assignmentId);
+    } catch (err) {
+      console.error('Failed to reject assignment:', err);
+    } finally {
+      setRejecting(null);
+    }
   };
 
   const formatWeekRange = (date) => {
@@ -178,13 +208,31 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       {isMyAssignment(assignment) && assignment.status === 'pending' && (
                         <button
                           onClick={() => onCompleteClick(assignment)}
                           className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 font-medium"
                         >
                           Mark Complete
+                        </button>
+                      )}
+                      {isAdmin && !isMyAssignment(assignment) && assignment.status === 'pending' && (
+                        <button
+                          onClick={() => handleAdminComplete(assignment.id)}
+                          disabled={completing === assignment.id}
+                          className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 font-medium disabled:opacity-50"
+                        >
+                          {completing === assignment.id ? 'Completing...' : 'Complete'}
+                        </button>
+                      )}
+                      {isAdmin && assignment.status === 'completed' && (
+                        <button
+                          onClick={() => handleReject(assignment.id)}
+                          disabled={rejecting === assignment.id}
+                          className="text-orange-600 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-300 font-medium disabled:opacity-50"
+                        >
+                          {rejecting === assignment.id ? 'Rejecting...' : 'Reject'}
                         </button>
                       )}
                       {assignment.status === 'completed' && assignment.photo_path && (
@@ -197,7 +245,7 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
                           View Photo
                         </a>
                       )}
-                      {user?.role === 'admin' && (
+                      {isAdmin && (
                         <button
                           onClick={() => handleDelete(assignment.id)}
                           className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
@@ -242,13 +290,31 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
                     {assignment.status}
                   </span>
                 </div>
-                <div className="flex gap-3 mt-3">
+                <div className="flex flex-wrap gap-2 mt-3">
                   {isMyAssignment(assignment) && assignment.status === 'pending' && (
                     <button
                       onClick={() => onCompleteClick(assignment)}
-                      className="flex-1 py-2 px-3 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                      className="flex-1 min-w-[120px] py-2 px-3 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
                     >
                       Mark Complete
+                    </button>
+                  )}
+                  {isAdmin && !isMyAssignment(assignment) && assignment.status === 'pending' && (
+                    <button
+                      onClick={() => handleAdminComplete(assignment.id)}
+                      disabled={completing === assignment.id}
+                      className="flex-1 min-w-[100px] py-2 px-3 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {completing === assignment.id ? 'Completing...' : 'Complete'}
+                    </button>
+                  )}
+                  {isAdmin && assignment.status === 'completed' && (
+                    <button
+                      onClick={() => handleReject(assignment.id)}
+                      disabled={rejecting === assignment.id}
+                      className="py-2 px-3 bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 text-sm rounded-md hover:bg-orange-200 dark:hover:bg-orange-900 disabled:opacity-50"
+                    >
+                      {rejecting === assignment.id ? 'Rejecting...' : 'Reject'}
                     </button>
                   )}
                   {assignment.status === 'completed' && assignment.photo_path && (
@@ -261,7 +327,7 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
                       View Photo
                     </a>
                   )}
-                  {user?.role === 'admin' && (
+                  {isAdmin && (
                     <button
                       onClick={() => handleDelete(assignment.id)}
                       className="py-2 px-3 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 text-sm rounded-md hover:bg-red-200 dark:hover:bg-red-900"
