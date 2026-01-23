@@ -126,6 +126,35 @@ router.patch('/:id/role', requireAdmin, (req, res) => {
   }
 });
 
+router.patch('/:id/rotation', requireAdmin, (req, res) => {
+  try {
+    const { inRotation } = req.body;
+
+    if (typeof inRotation !== 'boolean') {
+      return res.status(400).json({ error: 'inRotation must be a boolean' });
+    }
+
+    const user = User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.group_id !== req.groupId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    User.updateInRotation(req.params.id, inRotation);
+
+    const updated = User.findById(req.params.id);
+    delete updated.password_hash;
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Update rotation error:', error);
+    res.status(500).json({ error: 'Failed to update rotation status' });
+  }
+});
+
 router.delete('/:id', requireAdmin, (req, res) => {
   try {
     const user = User.findById(req.params.id);

@@ -198,10 +198,10 @@ router.post('/rotate', requireAdmin, (req, res) => {
     }
 
     const chores = Chore.findByGroup(req.groupId);
-    const members = User.findByGroup(req.groupId);
+    const members = User.findByGroupInRotation(req.groupId);
 
     if (members.length === 0) {
-      return res.status(400).json({ error: 'No members in group' });
+      return res.status(400).json({ error: 'No members in rotation' });
     }
 
     if (chores.length === 0) {

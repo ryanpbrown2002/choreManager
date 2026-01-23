@@ -11,7 +11,11 @@ export const User = {
   },
 
   findByGroup(groupId) {
-    return db.prepare('SELECT id, name, email, role FROM users WHERE group_id = ? ORDER BY name').all(groupId);
+    return db.prepare('SELECT id, name, email, role, in_rotation FROM users WHERE group_id = ? ORDER BY name').all(groupId);
+  },
+
+  findByGroupInRotation(groupId) {
+    return db.prepare('SELECT id, name, email, role, in_rotation FROM users WHERE group_id = ? AND in_rotation = 1 ORDER BY name').all(groupId);
   },
 
   async create({ id, groupId, name, email, password, role = 'member' }) {
@@ -53,6 +57,10 @@ export const User = {
 
   updateRole(id, role) {
     return db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, id);
+  },
+
+  updateInRotation(id, inRotation) {
+    return db.prepare('UPDATE users SET in_rotation = ? WHERE id = ?').run(inRotation ? 1 : 0, id);
   },
 
   listAll() {

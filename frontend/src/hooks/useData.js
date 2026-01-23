@@ -34,7 +34,13 @@ export function useMembers() {
     await fetchMembers();
   };
 
-  return { members, loading, error, refetch: fetchMembers, updateRole, deleteMember };
+  const updateRotation = async (userId, inRotation) => {
+    const response = await api.patch(`/users/${userId}/rotation`, { inRotation });
+    await fetchMembers();
+    return response.data;
+  };
+
+  return { members, loading, error, refetch: fetchMembers, updateRole, deleteMember, updateRotation };
 }
 
 export function useChores() {

@@ -25,4 +25,16 @@ for (const statement of statements) {
   }
 }
 
+// Add in_rotation column if it doesn't exist (for existing databases)
+try {
+  const columns = db.prepare("PRAGMA table_info(users)").all();
+  const hasInRotation = columns.some(col => col.name === 'in_rotation');
+  if (!hasInRotation) {
+    console.log('Adding in_rotation column to users table...');
+    db.exec('ALTER TABLE users ADD COLUMN in_rotation INTEGER NOT NULL DEFAULT 1');
+  }
+} catch (error) {
+  console.error('Migration error adding in_rotation:', error.message);
+}
+
 console.log('Migrations completed successfully!');

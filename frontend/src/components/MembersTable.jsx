@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
-export default function MembersTable({ members, onUpdateRole, onDeleteMember }) {
+export default function MembersTable({ members, onUpdateRole, onDeleteMember, onUpdateRotation }) {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [updatingRole, setUpdatingRole] = useState(null);
+  const [updatingRotation, setUpdatingRotation] = useState(null);
 
   const handleRoleChange = async (memberId, newRole) => {
     try {
@@ -31,6 +32,18 @@ export default function MembersTable({ members, onUpdateRole, onDeleteMember }) 
     }
   };
 
+  const handleRotationChange = async (memberId, inRotation) => {
+    try {
+      setUpdatingRotation(memberId);
+      await onUpdateRotation(memberId, inRotation);
+    } catch (error) {
+      console.error('Failed to update rotation:', error);
+      alert(error.response?.data?.error || 'Failed to update rotation status');
+    } finally {
+      setUpdatingRotation(null);
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
       <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -51,6 +64,9 @@ export default function MembersTable({ members, onUpdateRole, onDeleteMember }) 
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Role
               </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                In Rotation
+              </th>
               {isAdmin && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Actions
@@ -62,6 +78,8 @@ export default function MembersTable({ members, onUpdateRole, onDeleteMember }) 
             {members.map((member) => {
               const isCurrentUser = member.id === user?.id;
               const isUpdating = updatingRole === member.id;
+              const isUpdatingRot = updatingRotation === member.id;
+              const inRotation = member.in_rotation === 1 || member.in_rotation === true;
 
               return (
                 <tr key={member.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -99,6 +117,15 @@ export default function MembersTable({ members, onUpdateRole, onDeleteMember }) 
                       </span>
                     )}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <input
+                      type="checkbox"
+                      checked={inRotation}
+                      onChange={(e) => handleRotationChange(member.id, e.target.checked)}
+                      disabled={!isAdmin || isUpdatingRot}
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                  </td>
                   {isAdmin && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {!isCurrentUser && (
@@ -123,6 +150,8 @@ export default function MembersTable({ members, onUpdateRole, onDeleteMember }) 
         {members.map((member) => {
           const isCurrentUser = member.id === user?.id;
           const isUpdating = updatingRole === member.id;
+          const isUpdatingRot = updatingRotation === member.id;
+          const inRotation = member.in_rotation === 1 || member.in_rotation === true;
 
           return (
             <div key={member.id} className="p-4">
@@ -158,16 +187,26 @@ export default function MembersTable({ members, onUpdateRole, onDeleteMember }) 
                   </span>
                 )}
               </div>
-              {isAdmin && !isCurrentUser && (
-                <div className="mt-3">
+              <div className="mt-3 flex items-center justify-between">
+                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    checked={inRotation}
+                    onChange={(e) => handleRotationChange(member.id, e.target.checked)}
+                    disabled={!isAdmin || isUpdatingRot}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  In Rotation
+                </label>
+                {isAdmin && !isCurrentUser && (
                   <button
                     onClick={() => handleDelete(member.id, member.name)}
                     className="text-sm text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                   >
-                    Remove from group
+                    Remove
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           );
         })}

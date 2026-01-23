@@ -21,7 +21,7 @@ export const Group = {
 
   getMembers(id) {
     return db.prepare(
-      'SELECT id, name, email, role FROM users WHERE group_id = ? ORDER BY name'
+      'SELECT id, name, email, role, in_rotation FROM users WHERE group_id = ? ORDER BY name'
     ).all(id);
   },
 

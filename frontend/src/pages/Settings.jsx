@@ -10,7 +10,7 @@ export default function Settings() {
   const { user } = useAuth();
   const { darkMode, toggleDarkMode } = useTheme();
   const { group } = useGroup();
-  const { members, updateRole, deleteMember } = useMembers();
+  const { members, updateRole, deleteMember, updateRotation } = useMembers();
   const { chores, createChore, updateChore, deleteChore } = useChores();
 
   return (
@@ -88,6 +88,7 @@ export default function Settings() {
           members={members}
           onUpdateRole={updateRole}
           onDeleteMember={deleteMember}
+          onUpdateRotation={updateRotation}
         />
 
         <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-8">
