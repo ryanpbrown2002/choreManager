@@ -46,5 +46,3 @@ choreManager/
 ## Open Source
 
 This project is open source. Feel free to fork, contribute, or use it for your own group.
-
-Created by [Ryan Brown](https://github.com/ryanpbrown2002)
