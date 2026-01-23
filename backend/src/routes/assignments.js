@@ -26,6 +26,8 @@ const upload = multer({
   }
 });
 
+const MAX_PHOTOS = 3;
+
 router.use(authenticate);
 
 router.get('/all', (req, res) => {
@@ -110,7 +112,7 @@ router.post('/', requireAdmin, (req, res) => {
   }
 });
 
-router.post('/:id/complete', upload.single('photo'), (req, res) => {
+router.post('/:id/complete', upload.array('photos', MAX_PHOTOS), (req, res) => {
   try {
     const assignment = Assignment.findById(req.params.id);
 
@@ -130,14 +132,16 @@ router.post('/:id/complete', upload.single('photo'), (req, res) => {
     }
 
     const chore = Chore.findById(assignment.chore_id);
+    const hasPhotos = req.files && req.files.length > 0;
 
     // Only require photo for non-admin users completing their own chores
-    if (chore.requires_photo && !req.file && !isAdmin) {
+    if (chore.requires_photo && !hasPhotos && !isAdmin) {
       return res.status(400).json({ error: 'Photo verification required for this chore' });
     }
 
-    const photoPath = req.file ? req.file.path : null;
-    Assignment.complete(req.params.id, photoPath);
+    // Store photo paths as JSON array for multiple photos, or null if none
+    const photoPaths = hasPhotos ? JSON.stringify(req.files.map(f => f.path)) : null;
+    Assignment.complete(req.params.id, photoPaths);
 
     const updated = Assignment.findById(req.params.id);
     res.json(updated);

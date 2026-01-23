@@ -101,10 +101,12 @@ export function useAssignments() {
     fetchAssignments();
   }, []);
 
-  const completeAssignment = async (id, photoFile) => {
+  const completeAssignment = async (id, photoFiles) => {
     const formData = new FormData();
-    if (photoFile) {
-      formData.append('photo', photoFile);
+    if (photoFiles && photoFiles.length > 0) {
+      photoFiles.forEach(file => {
+        formData.append('photos', file);
+      });
     }
     const response = await api.post(`/assignments/${id}/complete`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
