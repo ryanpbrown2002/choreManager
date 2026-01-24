@@ -94,7 +94,7 @@ export default function Settings() {
         <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-8">
           <div className="text-center text-sm text-gray-500 dark:text-gray-400">
             <p className="mb-2">
-              Chore Manager is open source software created by Ryan Brown
+              Chorho is open source software created by Ryan Brown
             </p>
             <a
               href="https://github.com/ryanpbrown2002/choreManager"

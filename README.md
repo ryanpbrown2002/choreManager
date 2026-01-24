@@ -1,4 +1,4 @@
-# Chore Manager
+# Chorho
 
 A web app for managing shared chores within a group. An admin can create chores, invite members, and automatically generate a rotating schedule. Users receive email notifications when assigned new chores and can mark tasks complete with photo verification.
 

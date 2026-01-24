@@ -19,8 +19,8 @@ export default function Layout({ children }) {
           <div className="flex justify-between h-14 sm:h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <Link to="/" className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
-                Chore Manager
+              <Link to="/" className="flex items-center">
+                <img src="/Chorho.png" alt="Chorho" className="h-8 sm:h-10" />
               </Link>
             </div>
 

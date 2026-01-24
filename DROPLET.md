@@ -1,12 +1,12 @@
-# Running Chore Manager on a DigitalOcean Droplet
+# Running Chorho on a DigitalOcean Droplet
 
-This guide covers deploying and running the Chore Manager app on a DigitalOcean droplet.
+This guide covers deploying and running the Chorho app on a DigitalOcean droplet.
 
 ## Prerequisites
 
 - A DigitalOcean droplet (Ubuntu 22.04 or newer recommended)
 - SSH access to the droplet
-- The codebase uploaded to the droplet (e.g., at `/home/your-username/chore-manager`)
+- The codebase uploaded to the droplet (e.g., at `/home/your-username/chorho`)
 
 ## Step 1: Install Node.js
 
@@ -41,7 +41,7 @@ sudo apt install -y build-essential python3
 ## Step 3: Set Up the Backend
 
 ```bash
-cd /home/your-username/chore-manager/backend
+cd /home/your-username/chorho/backend
 
 # Install dependencies
 npm install
@@ -75,7 +75,7 @@ npm run migrate
 ## Step 4: Build the Frontend
 
 ```bash
-cd /home/your-username/chore-manager/frontend
+cd /home/your-username/chorho/frontend
 
 # Install dependencies
 npm install
@@ -88,7 +88,7 @@ This creates a `dist/` folder with the production build.
 
 ## Step 5: Configure Backend to Serve Frontend
 
-Modify the backend to serve the frontend static files. Add this to `/home/your-username/chore-manager/backend/src/server.js`:
+Modify the backend to serve the frontend static files. Add this to `/home/your-username/chorho/backend/src/server.js`:
 
 ```javascript
 // Add this after other middleware, before the error handler
@@ -116,10 +116,10 @@ sudo npm install -g pm2
 ## Step 7: Start the Application with PM2
 
 ```bash
-cd /home/your-username/chore-manager/backend
+cd /home/your-username/chorho/backend
 
 # Start the app
-pm2 start src/server.js --name "chore-manager"
+pm2 start src/server.js --name "chorho"
 
 # Save the process list so it survives reboot
 pm2 save
@@ -133,10 +133,10 @@ pm2 startup
 
 ```bash
 pm2 status              # Check app status
-pm2 logs chore-manager  # View logs
-pm2 restart chore-manager  # Restart the app
-pm2 stop chore-manager     # Stop the app
-pm2 delete chore-manager   # Remove from PM2
+pm2 logs chorho  # View logs
+pm2 restart chorho  # Restart the app
+pm2 stop chorho     # Stop the app
+pm2 delete chorho   # Remove from PM2
 ```
 
 ## Step 8: Set Up Nginx (Recommended)
@@ -150,7 +150,7 @@ sudo apt install -y nginx
 Create an Nginx configuration:
 
 ```bash
-sudo nano /etc/nginx/sites-available/chore-manager
+sudo nano /etc/nginx/sites-available/chorho
 ```
 
 Add this configuration:
@@ -181,7 +181,7 @@ Enable the site:
 
 ```bash
 # Enable the site
-sudo ln -s /etc/nginx/sites-available/chore-manager /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/chorho /etc/nginx/sites-enabled/
 
 # Remove default site (optional)
 sudo rm /etc/nginx/sites-enabled/default
@@ -232,7 +232,7 @@ sudo ufw allow 3000
 
 ```bash
 pm2 status
-pm2 logs chore-manager --lines 50
+pm2 logs chorho --lines 50
 ```
 
 ### Check what's listening on port 3000
@@ -244,10 +244,10 @@ sudo lsof -i :3000
 ### Database issues
 
 ```bash
-cd /home/your-username/chore-manager/backend
+cd /home/your-username/chorho/backend
 rm chore.db chore.db-shm chore.db-wal 2>/dev/null
 npm run migrate
-pm2 restart chore-manager
+pm2 restart chorho
 ```
 
 ### Nginx issues
@@ -262,8 +262,8 @@ sudo tail -f /var/log/nginx/error.log  # View errors
 
 ```bash
 # Make sure the uploads directory exists and is writable
-mkdir -p /home/your-username/chore-manager/backend/uploads
-chmod 755 /home/your-username/chore-manager/backend/uploads
+mkdir -p /home/your-username/chorho/backend/uploads
+chmod 755 /home/your-username/chorho/backend/uploads
 ```
 
 ## Updating the Application
@@ -271,7 +271,7 @@ chmod 755 /home/your-username/chore-manager/backend/uploads
 When you push new code to the droplet:
 
 ```bash
-cd /home/your-username/chore-manager
+cd /home/your-username/chorho
 
 # Pull changes (if using git)
 git pull
@@ -284,7 +284,7 @@ cd ../frontend && npm install
 cd frontend && npm run build
 
 # Restart the backend
-pm2 restart chore-manager
+pm2 restart chorho
 ```
 
 ## Accessing the App

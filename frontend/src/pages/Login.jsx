@@ -28,8 +28,8 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="max-w-md w-full space-y-8 p-8 bg-white dark:bg-gray-800 rounded-lg shadow">
-        <div>
-          <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white">Chore Manager</h2>
+        <div className="flex flex-col items-center">
+          <img src="/Chorho.png" alt="Chorho" className="h-16 mb-2" />
           <p className="mt-2 text-center text-gray-600 dark:text-gray-300">Sign in to your account</p>
         </div>
 
