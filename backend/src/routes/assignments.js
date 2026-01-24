@@ -1,8 +1,16 @@
 import express from 'express';
 import multer from 'multer';
+import jwt from 'jsonwebtoken';
+import { existsSync } from 'fs';
+import { join, resolve } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import { Assignment, Chore, User } from '../models/index.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 import { generateId } from '../utils/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const router = express.Router();
 
@@ -28,6 +36,70 @@ const upload = multer({
 
 const MAX_PHOTOS = 3;
 
+// Secure photo serving endpoint - requires authentication and group membership
+// Note: This endpoint accepts token via query param since <img> tags can't send headers
+// Must be defined BEFORE router.use(authenticate) to handle auth manually
+router.get('/photos/:filename', (req, res) => {
+  try {
+    const { filename } = req.params;
+    const token = req.query.token;
+
+    if (!token) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // Verify the token and get user info
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    const user = User.findById(decoded.userId);
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    // Prevent directory traversal attacks
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+
+    // Find the assignment that contains this photo
+    const assignment = Assignment.findByPhotoPath(filename);
+
+    if (!assignment) {
+      return res.status(404).json({ error: 'Photo not found' });
+    }
+
+    // Verify the requesting user belongs to the same group
+    if (assignment.group_id !== user.group_id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Construct the file path and verify it exists
+    const uploadsDir = resolve(__dirname, '../../uploads');
+    const filePath = join(uploadsDir, filename);
+
+    // Ensure the resolved path is still within the uploads directory (prevent traversal)
+    if (!filePath.startsWith(uploadsDir)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (!existsSync(filePath)) {
+      return res.status(404).json({ error: 'Photo file not found' });
+    }
+
+    // Send the file
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('Serve photo error:', error);
+    res.status(500).json({ error: 'Failed to serve photo' });
+  }
+});
+
+// All routes below require authentication
 router.use(authenticate);
 
 router.get('/all', (req, res) => {

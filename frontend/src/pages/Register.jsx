@@ -164,6 +164,17 @@ export default function Register() {
               Already have an account? Sign in
             </Link>
           </div>
+
+          <div className="text-center text-sm text-gray-500 dark:text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-700">
+            By registering, you agree to our{' '}
+            <Link to="/terms" className="text-blue-600 dark:text-blue-400 hover:underline">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacy" className="text-blue-600 dark:text-blue-400 hover:underline">
+              Privacy Policy
+            </Link>
+          </div>
         </form>
       </div>
     </div>

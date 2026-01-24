@@ -72,5 +72,16 @@ export const Assignment = {
 
   delete(id) {
     return db.prepare('DELETE FROM assignments WHERE id = ?').run(id);
+  },
+
+  findByPhotoPath(photoPath) {
+    // Search for assignments where photo_path contains the filename
+    // Handles both single path strings and JSON arrays
+    return db.prepare(
+      `SELECT a.*, c.group_id
+       FROM assignments a
+       JOIN chores c ON a.chore_id = c.id
+       WHERE a.photo_path LIKE ?`
+    ).get(`%${photoPath}%`);
   }
 };

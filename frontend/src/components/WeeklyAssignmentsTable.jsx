@@ -14,6 +14,14 @@ function getPhotoPaths(photoPath) {
   }
 }
 
+// Convert stored path to authenticated API URL
+function getPhotoUrl(path) {
+  // Extract filename from path (handles "uploads/filename" format)
+  const filename = path.split('/').pop();
+  const token = localStorage.getItem('token');
+  return `/api/assignments/photos/${filename}?token=${encodeURIComponent(token)}`;
+}
+
 // Photo viewer modal component (works for both desktop and mobile)
 function PhotoViewer({ photoPaths }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,13 +66,13 @@ function PhotoViewer({ photoPaths }) {
                 {photoPaths.map((path, index) => (
                   <a
                     key={index}
-                    href={`/${path}`}
+                    href={getPhotoUrl(path)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block aspect-square overflow-hidden rounded-lg hover:opacity-80 transition-opacity"
                   >
                     <img
-                      src={`/${path}`}
+                      src={getPhotoUrl(path)}
                       alt={`Photo ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
@@ -123,13 +131,13 @@ function MobilePhotoViewer({ photoPaths }) {
               {photoPaths.map((path, index) => (
                 <a
                   key={index}
-                  href={`/${path}`}
+                  href={getPhotoUrl(path)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block aspect-square overflow-hidden rounded-lg"
                 >
                   <img
-                    src={`/${path}`}
+                    src={getPhotoUrl(path)}
                     alt={`Photo ${index + 1}`}
                     className="w-full h-full object-cover"
                   />

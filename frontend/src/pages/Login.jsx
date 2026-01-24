@@ -81,6 +81,16 @@ export default function Login() {
               Don't have an account? Register
             </Link>
           </div>
+
+          <div className="text-center text-sm text-gray-500 dark:text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <Link to="/privacy" className="hover:text-gray-700 dark:hover:text-gray-300">
+              Privacy Policy
+            </Link>
+            <span className="mx-2">·</span>
+            <Link to="/terms" className="hover:text-gray-700 dark:hover:text-gray-300">
+              Terms of Service
+            </Link>
+          </div>
         </form>
       </div>
     </div>

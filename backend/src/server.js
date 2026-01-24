@@ -20,7 +20,6 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(join(__dirname, '../uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -38,8 +37,8 @@ app.use(express.static(frontendPath));
 
 // Catch-all route - serve index.html for client-side routing
 app.get('*', (req, res, next) => {
-  // Skip API routes and uploads
-  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+  // Skip API routes
+  if (req.path.startsWith('/api')) {
     return next();
   }
   res.sendFile(join(frontendPath, 'index.html'));
