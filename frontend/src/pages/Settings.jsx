@@ -12,7 +12,7 @@ export default function Settings() {
   const { darkMode, toggleDarkMode } = useTheme();
   const { group } = useGroup();
   const { members, updateRole, deleteMember, updateRotation } = useMembers();
-  const { chores, createChore, updateChore, deleteChore } = useChores();
+  const { chores, createChore, updateChore, deleteChore, reorderChore } = useChores();
 
   return (
     <Layout>
@@ -83,6 +83,7 @@ export default function Settings() {
           onCreateChore={createChore}
           onUpdateChore={updateChore}
           onDeleteChore={deleteChore}
+          onReorderChore={reorderChore}
         />
 
         <MembersTable

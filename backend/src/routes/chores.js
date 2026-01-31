@@ -78,12 +78,13 @@ router.patch('/:id', requireAdmin, (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const { name, frequency, requiresPhoto } = req.body;
+    const { name, frequency, requiresPhoto, orderNum } = req.body;
 
     Chore.update(req.params.id, {
       name,
       frequency,
-      requiresPhoto: requiresPhoto !== undefined ? (requiresPhoto ? 1 : 0) : undefined
+      requiresPhoto: requiresPhoto !== undefined ? (requiresPhoto ? 1 : 0) : undefined,
+      orderNum
     });
 
     const updated = Chore.findById(req.params.id);
@@ -91,6 +92,56 @@ router.patch('/:id', requireAdmin, (req, res) => {
   } catch (error) {
     console.error('Update chore error:', error);
     res.status(500).json({ error: 'Failed to update chore' });
+  }
+});
+
+router.post('/reorder', requireAdmin, (req, res) => {
+  try {
+    const { choreId, direction } = req.body;
+
+    if (!choreId || !direction) {
+      return res.status(400).json({ error: 'choreId and direction are required' });
+    }
+
+    if (!['up', 'down'].includes(direction)) {
+      return res.status(400).json({ error: 'Direction must be "up" or "down"' });
+    }
+
+    const chore = Chore.findById(choreId);
+    if (!chore) {
+      return res.status(404).json({ error: 'Chore not found' });
+    }
+
+    if (chore.group_id !== req.groupId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const allChores = Chore.findByGroup(req.groupId);
+    const currentIndex = allChores.findIndex(c => c.id === choreId);
+
+    // Determine the target index
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+    // Check bounds
+    if (targetIndex < 0 || targetIndex >= allChores.length) {
+      return res.status(400).json({ error: 'Cannot move chore in that direction' });
+    }
+
+    const targetChore = allChores[targetIndex];
+
+    // Swap order numbers
+    const currentOrderNum = chore.order_num;
+    const targetOrderNum = targetChore.order_num;
+
+    Chore.update(choreId, { orderNum: targetOrderNum });
+    Chore.update(targetChore.id, { orderNum: currentOrderNum });
+
+    // Return updated chore list
+    const updatedChores = Chore.findByGroup(req.groupId);
+    res.json(updatedChores);
+  } catch (error) {
+    console.error('Reorder chore error:', error);
+    res.status(500).json({ error: 'Failed to reorder chore' });
   }
 });
 

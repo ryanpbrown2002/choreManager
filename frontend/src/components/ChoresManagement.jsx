@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
-export default function ChoresManagement({ chores, onCreateChore, onUpdateChore, onDeleteChore }) {
+export default function ChoresManagement({ chores, onCreateChore, onUpdateChore, onDeleteChore, onReorderChore }) {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [showForm, setShowForm] = useState(false);
@@ -149,18 +149,43 @@ export default function ChoresManagement({ chores, onCreateChore, onUpdateChore,
       )}
 
       <div className="space-y-2">
-        {chores.map((chore) => (
+        {chores.map((chore, index) => (
           <div key={chore.id} className="flex justify-between items-start border-b dark:border-gray-700 pb-3 pt-1">
-            <div className="flex-1 min-w-0">
-              <div className="font-medium text-gray-900 dark:text-white">
-                <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-bold rounded-full mr-2">
-                  {chore.order_num}
-                </span>
-                {chore.name}
+            <div className="flex items-center gap-2">
+              {/* Reorder buttons */}
+              <div className="flex flex-col">
+                <button
+                  onClick={() => onReorderChore?.(chore.id, 'up')}
+                  disabled={index === 0}
+                  className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Move up"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => onReorderChore?.(chore.id, 'down')}
+                  disabled={index === chores.length - 1}
+                  className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Move down"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-8">
-                {chore.frequency}
-                {chore.requires_photo === 1 && ' • Photo required'}
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900 dark:text-white">
+                  <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-bold rounded-full mr-2">
+                    {chore.order_num}
+                  </span>
+                  {chore.name}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-8">
+                  {chore.frequency}
+                  {chore.requires_photo === 1 && ' • Photo required'}
+                </div>
               </div>
             </div>
             <div className="flex gap-3 ml-2">

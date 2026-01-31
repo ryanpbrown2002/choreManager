@@ -253,8 +253,10 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
   const [rejecting, setRejecting] = useState(null);
   const isAdmin = user?.role === 'admin';
 
-  // Filter assignments by the selected week
-  const weekAssignments = weekStart ? filterAssignmentsByWeek(assignments, weekStart) : assignments;
+  // Filter assignments by the selected week and sort by chore order
+  const weekAssignments = (weekStart ? filterAssignmentsByWeek(assignments, weekStart) : assignments)
+    .slice()
+    .sort((a, b) => (a.chore_order || 0) - (b.chore_order || 0));
 
   const handleDelete = async (assignmentId) => {
     if (!window.confirm('Delete this assignment?')) {

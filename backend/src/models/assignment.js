@@ -27,12 +27,12 @@ export const Assignment = {
 
   findByGroup(groupId) {
     return db.prepare(
-      `SELECT a.*, c.name as chore_name, c.requires_photo, u.name as user_name, u.email
+      `SELECT a.*, c.name as chore_name, c.requires_photo, c.order_num as chore_order, u.name as user_name, u.email
        FROM assignments a
        JOIN chores c ON a.chore_id = c.id
        JOIN users u ON a.user_id = u.id
        WHERE c.group_id = ?
-       ORDER BY a.week_start ASC`
+       ORDER BY a.week_start ASC, c.order_num ASC`
     ).all(groupId);
   },
 
