@@ -259,6 +259,17 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
     .slice()
     .sort((a, b) => (a.chore_order || 0) - (b.chore_order || 0));
 
+  // Calculate previous week and check if it has assignments
+  const getPreviousWeekStart = () => {
+    const prevWeek = new Date(weekStart);
+    prevWeek.setDate(prevWeek.getDate() - 7);
+    return prevWeek;
+  };
+
+  const previousWeekStart = getPreviousWeekStart();
+  const previousWeekAssignments = filterAssignmentsByWeek(assignments, previousWeekStart);
+  const hasPreviousWeekAssignments = previousWeekAssignments.length > 0;
+
   const handleDelete = async (assignmentId) => {
     if (!window.confirm('Delete this assignment?')) {
       return;
@@ -274,17 +285,24 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
 
   const handleRotate = async () => {
     const weekLabel = formatWeekRange(weekStart);
-    if (!window.confirm(`Rotate all chores to the next person for ${weekLabel}? This will create new assignments for everyone.`)) {
+    if (!window.confirm(`Rotate chores from previous week to ${weekLabel}? Each person will move to the next chore in order.`)) {
       return;
     }
 
     setRotating(true);
     try {
       const weekStartTs = getWeekStartTimestamp(weekStart);
-      await api.post('/assignments/rotate', { weekStart: weekStartTs });
+      const previousWeekStartTs = getWeekStartTimestamp(previousWeekStart);
+      await api.post('/assignments/rotate', {
+        weekStart: weekStartTs,
+        previousWeekStart: previousWeekStartTs
+      });
       onAssignmentsChange?.();
     } catch (err) {
       console.error('Failed to rotate assignments:', err);
+      if (err.response?.data?.code === 'NO_PREVIOUS_ASSIGNMENTS') {
+        alert('No chores assigned in previous week. Cannot rotate.');
+      }
     } finally {
       setRotating(false);
     }
@@ -408,22 +426,30 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
         </div>
         {/* Admin buttons */}
         {isAdmin && (
-          <div className="mt-3 flex flex-col sm:flex-row justify-center gap-2">
-            <button
-              onClick={handleRotate}
-              disabled={rotating || !chores?.length || !members?.length}
-              className="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 text-sm"
-            >
-              {rotating ? 'Rotating...' : 'Rotate All Chores'}
-            </button>
-            {weekAssignments.length > 0 && (
+          <div className="mt-3">
+            <div className="flex flex-col sm:flex-row justify-center gap-2">
               <button
-                onClick={handleDeleteWeek}
-                disabled={deleting}
-                className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 text-sm"
+                onClick={handleRotate}
+                disabled={rotating || !chores?.length || !hasPreviousWeekAssignments}
+                className="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                title={!hasPreviousWeekAssignments ? 'No assignments in previous week' : ''}
               >
-                {deleting ? 'Deleting...' : 'Delete All This Week'}
+                {rotating ? 'Rotating...' : 'Rotate From Previous Week'}
               </button>
+              {weekAssignments.length > 0 && (
+                <button
+                  onClick={handleDeleteWeek}
+                  disabled={deleting}
+                  className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 text-sm"
+                >
+                  {deleting ? 'Deleting...' : 'Delete All This Week'}
+                </button>
+              )}
+            </div>
+            {!hasPreviousWeekAssignments && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                No chores assigned in previous week — rotate not available
+              </p>
             )}
           </div>
         )}

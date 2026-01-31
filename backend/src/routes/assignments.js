@@ -297,72 +297,87 @@ router.delete('/:id', requireAdmin, (req, res) => {
 
 router.post('/rotate', requireAdmin, (req, res) => {
   try {
-    const { weekStart } = req.body;
+    const { weekStart, previousWeekStart } = req.body;
 
-    if (!weekStart) {
-      return res.status(400).json({ error: 'weekStart is required' });
+    if (!weekStart || !previousWeekStart) {
+      return res.status(400).json({ error: 'weekStart and previousWeekStart are required' });
     }
 
-    // Get chores ordered by order_num (array index 0 = first chore, etc.)
+    // Get all chores ordered by order_num
     const chores = Chore.findByGroup(req.groupId);
-    // Get members in rotation with their rotation_position
-    const members = User.findByGroupInRotation(req.groupId);
-
-    if (members.length === 0) {
-      return res.status(400).json({ error: 'No members in rotation' });
-    }
 
     if (chores.length === 0) {
-      return res.status(400).json({ error: 'No chores to assign' });
+      return res.status(400).json({ error: 'No chores exist' });
     }
 
-    const totalMembers = members.length;
-    const numChores = chores.length;
+    // Get assignments from the previous week
+    const allAssignments = Assignment.findByGroup(req.groupId);
+    const previousWeekAssignments = allAssignments.filter(a => a.week_start === previousWeekStart);
 
-    // First, normalize positions to ensure they're 1, 2, 3... (fix any gaps or duplicates)
-    // Sort members by current position (or name if position is null)
-    members.sort((a, b) => {
-      const posA = a.rotation_position ?? Infinity;
-      const posB = b.rotation_position ?? Infinity;
-      if (posA !== posB) return posA - posB;
-      return a.name.localeCompare(b.name);
-    });
-
-    // Assign sequential positions 1, 2, 3...
-    members.forEach((member, index) => {
-      member.rotation_position = index + 1;
-    });
-
-    // Now rotate: each person moves to the next position
-    // new_pos = (current_pos % total_members) + 1
-    // So position 1 -> 2, position 2 -> 3, ..., position N -> 1
-    for (const member of members) {
-      const currentPos = member.rotation_position;
-      const newPos = (currentPos % totalMembers) + 1;
-      User.updateRotationPosition(member.id, newPos);
-      member.rotation_position = newPos;
+    if (previousWeekAssignments.length === 0) {
+      return res.status(400).json({
+        error: 'No chores assigned in previous week, rotate not available',
+        code: 'NO_PREVIOUS_ASSIGNMENTS'
+      });
     }
+
+    // Build a map of chore_id -> order_num for quick lookup
+    const choreOrderMap = {};
+    chores.forEach(c => {
+      choreOrderMap[c.id] = c.order_num;
+    });
+
+    // Get the chores that were assigned last week (by order_num), sorted
+    const previousChoreOrders = previousWeekAssignments
+      .map(a => choreOrderMap[a.chore_id])
+      .filter(order => order !== undefined)
+      .sort((a, b) => a - b);
+
+    if (previousChoreOrders.length === 0) {
+      return res.status(400).json({
+        error: 'Previous week chores no longer exist',
+        code: 'NO_PREVIOUS_ASSIGNMENTS'
+      });
+    }
+
+    // Find min and max order_num from previous week's chores
+    const minOrder = Math.min(...previousChoreOrders);
+    const maxOrder = Math.max(...previousChoreOrders);
 
     const createdAssignments = [];
 
-    // Assign chores based on position using array index (not order_num)
-    // Position 1 gets chores[0], position 2 gets chores[1], etc.
-    for (const member of members) {
-      const pos = member.rotation_position;
-      const choreIndex = pos - 1; // Convert 1-based position to 0-based index
+    // For each assignment from previous week, move user to next chore
+    for (const prevAssignment of previousWeekAssignments) {
+      const currentChoreOrder = choreOrderMap[prevAssignment.chore_id];
 
-      if (choreIndex < numChores) {
-        const chore = chores[choreIndex];
+      if (currentChoreOrder === undefined) {
+        // Chore was deleted, skip this user
+        continue;
+      }
+
+      // Calculate next chore order: if at max, wrap to min; otherwise go to next
+      let nextChoreOrder;
+      if (currentChoreOrder >= maxOrder) {
+        nextChoreOrder = minOrder;
+      } else {
+        // Find the next order_num that exists in the previous week's chores
+        const higherOrders = previousChoreOrders.filter(o => o > currentChoreOrder);
+        nextChoreOrder = higherOrders.length > 0 ? Math.min(...higherOrders) : minOrder;
+      }
+
+      // Find the chore with this order_num
+      const nextChore = chores.find(c => c.order_num === nextChoreOrder);
+
+      if (nextChore) {
         const assignmentId = generateId();
         Assignment.create({
           id: assignmentId,
-          choreId: chore.id,
-          userId: member.id,
+          choreId: nextChore.id,
+          userId: prevAssignment.user_id,
           weekStart
         });
         createdAssignments.push(Assignment.findById(assignmentId));
       }
-      // Members with position > numChores get no assignment (they're "off")
     }
 
     res.json({
