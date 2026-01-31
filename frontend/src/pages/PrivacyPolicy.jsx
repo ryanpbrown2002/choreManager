@@ -6,7 +6,7 @@ export default function PrivacyPolicy() {
       <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow p-8">
         <div className="mb-8">
           <Link to="/login" className="text-blue-600 dark:text-blue-400 hover:underline">
-            &larr; Back to Login
+            &larr; Back
           </Link>
         </div>
 

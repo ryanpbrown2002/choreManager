@@ -6,17 +6,24 @@ export const Chore = {
   },
 
   findByGroup(groupId) {
-    return db.prepare('SELECT * FROM chores WHERE group_id = ? ORDER BY name').all(groupId);
+    return db.prepare('SELECT * FROM chores WHERE group_id = ? ORDER BY order_num, name').all(groupId);
   },
 
-  create({ id, groupId, name, frequency, requiresPhoto = 0 }) {
+  getMaxOrderNum(groupId) {
+    const result = db.prepare('SELECT MAX(order_num) as max_order FROM chores WHERE group_id = ?').get(groupId);
+    return result?.max_order || 0;
+  },
+
+  create({ id, groupId, name, frequency, requiresPhoto = 0, orderNum }) {
+    // Auto-calculate orderNum if not provided
+    const finalOrderNum = orderNum ?? (this.getMaxOrderNum(groupId) + 1);
     return db.prepare(
-      `INSERT INTO chores (id, group_id, name, frequency, requires_photo)
-       VALUES (?, ?, ?, ?, ?)`
-    ).run(id, groupId, name, frequency, requiresPhoto);
+      `INSERT INTO chores (id, group_id, name, frequency, requires_photo, order_num)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ).run(id, groupId, name, frequency, requiresPhoto, finalOrderNum);
   },
 
-  update(id, { name, frequency, requiresPhoto }) {
+  update(id, { name, frequency, requiresPhoto, orderNum }) {
     const fields = [];
     const values = [];
 
@@ -31,6 +38,10 @@ export const Chore = {
     if (requiresPhoto !== undefined) {
       fields.push('requires_photo = ?');
       values.push(requiresPhoto);
+    }
+    if (orderNum !== undefined) {
+      fields.push('order_num = ?');
+      values.push(orderNum);
     }
 
     if (fields.length === 0) return;

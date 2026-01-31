@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   role TEXT NOT NULL CHECK(role IN ('admin', 'member')) DEFAULT 'member',
   in_rotation INTEGER NOT NULL DEFAULT 1,
+  rotation_position INTEGER,
   created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
   FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE
 );
@@ -26,6 +27,7 @@ CREATE TABLE IF NOT EXISTS chores (
   name TEXT NOT NULL,
   frequency TEXT NOT NULL CHECK(frequency IN ('daily', 'weekly', 'biweekly', 'monthly')),
   requires_photo INTEGER DEFAULT 0,
+  order_num INTEGER,
   created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
   FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE
 );

@@ -59,7 +59,9 @@ export default function ChoresManagement({ chores, onCreateChore, onUpdateChore,
         <div className="space-y-2">
           {chores.map((chore) => (
             <div key={chore.id} className="border-b dark:border-gray-700 pb-2">
-              <div className="font-medium text-gray-900 dark:text-white">{chore.name}</div>
+              <div className="font-medium text-gray-900 dark:text-white">
+                <span className="text-gray-500 dark:text-gray-400">#{chore.order_num}</span> {chore.name}
+              </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 {chore.frequency}
                 {chore.requires_photo === 1 && ' • Photo required'}
@@ -150,8 +152,13 @@ export default function ChoresManagement({ chores, onCreateChore, onUpdateChore,
         {chores.map((chore) => (
           <div key={chore.id} className="flex justify-between items-start border-b dark:border-gray-700 pb-3 pt-1">
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-gray-900 dark:text-white">{chore.name}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <div className="font-medium text-gray-900 dark:text-white">
+                <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-bold rounded-full mr-2">
+                  {chore.order_num}
+                </span>
+                {chore.name}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-8">
                 {chore.frequency}
                 {chore.requires_photo === 1 && ' • Photo required'}
               </div>

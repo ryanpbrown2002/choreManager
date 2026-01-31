@@ -143,7 +143,7 @@ router.patch('/:id/rotation', requireAdmin, (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    User.updateInRotation(req.params.id, inRotation);
+    User.updateInRotation(req.params.id, inRotation, req.groupId);
 
     const updated = User.findById(req.params.id);
     delete updated.password_hash;

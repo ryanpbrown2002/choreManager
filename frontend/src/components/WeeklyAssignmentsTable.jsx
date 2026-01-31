@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../api/client';
 import { filterAssignmentsByWeek, getWeekBounds, getWeekStartTimestamp } from '../utils/dateUtils';
@@ -14,21 +14,57 @@ function getPhotoPaths(photoPath) {
   }
 }
 
-// Convert stored path to authenticated API URL
-function getPhotoUrl(path) {
-  // Extract filename from path (handles "uploads/filename" format)
-  const filename = path.split('/').pop();
-  const token = localStorage.getItem('token');
+// Extract filename from path (handles "uploads/filename" format)
+function getFilename(path) {
+  return path.split('/').pop();
+}
+
+// Fetch a short-lived token for a photo
+async function fetchPhotoToken(filename) {
+  const response = await api.post('/assignments/photo-token', { filename });
+  return response.data.token;
+}
+
+// Build photo URL with short-lived token
+function buildPhotoUrl(filename, token) {
   return `/api/assignments/photos/${filename}?token=${encodeURIComponent(token)}`;
 }
 
 // Photo viewer modal component (works for both desktop and mobile)
 function PhotoViewer({ photoPaths }) {
   const [isOpen, setIsOpen] = useState(false);
-
-  if (photoPaths.length === 0) return null;
+  const [photoUrls, setPhotoUrls] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const photoCount = photoPaths.length;
+
+  // Fetch short-lived tokens when modal opens
+  useEffect(() => {
+    if (isOpen && photoPaths.length > 0) {
+      setLoading(true);
+      setError(null);
+
+      Promise.all(
+        photoPaths.map(async (path) => {
+          const filename = getFilename(path);
+          const token = await fetchPhotoToken(filename);
+          return buildPhotoUrl(filename, token);
+        })
+      )
+        .then(urls => {
+          setPhotoUrls(urls);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Failed to load photos:', err);
+          setError('Failed to load photos');
+          setLoading(false);
+        });
+    }
+  }, [isOpen, photoPaths]);
+
+  if (photoPaths.length === 0) return null;
 
   return (
     <>
@@ -62,26 +98,40 @@ function PhotoViewer({ photoPaths }) {
             </div>
             {/* Photo grid */}
             <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
-              <div className="grid gap-3" style={{ gridTemplateColumns: photoCount === 1 ? '1fr' : 'repeat(2, 1fr)' }}>
-                {photoPaths.map((path, index) => (
-                  <a
-                    key={index}
-                    href={getPhotoUrl(path)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block aspect-square overflow-hidden rounded-lg hover:opacity-80 transition-opacity"
-                  >
-                    <img
-                      src={getPhotoUrl(path)}
-                      alt={`Photo ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </a>
-                ))}
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 text-center">
-                Click photo to open full size
-              </p>
+              {loading && (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  Loading photos...
+                </div>
+              )}
+              {error && (
+                <div className="text-center py-8 text-red-500 dark:text-red-400">
+                  {error}
+                </div>
+              )}
+              {!loading && !error && (
+                <>
+                  <div className="grid gap-3" style={{ gridTemplateColumns: photoCount === 1 ? '1fr' : 'repeat(2, 1fr)' }}>
+                    {photoUrls.map((url, index) => (
+                      <a
+                        key={index}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block aspect-square overflow-hidden rounded-lg hover:opacity-80 transition-opacity"
+                      >
+                        <img
+                          src={url}
+                          alt={`Photo ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 text-center">
+                    Click photo to open full size
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -93,10 +143,38 @@ function PhotoViewer({ photoPaths }) {
 // Mobile photo viewer (button style)
 function MobilePhotoViewer({ photoPaths }) {
   const [isOpen, setIsOpen] = useState(false);
-
-  if (photoPaths.length === 0) return null;
+  const [photoUrls, setPhotoUrls] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const photoCount = photoPaths.length;
+
+  // Fetch short-lived tokens when modal opens
+  useEffect(() => {
+    if (isOpen && photoPaths.length > 0) {
+      setLoading(true);
+      setError(null);
+
+      Promise.all(
+        photoPaths.map(async (path) => {
+          const filename = getFilename(path);
+          const token = await fetchPhotoToken(filename);
+          return buildPhotoUrl(filename, token);
+        })
+      )
+        .then(urls => {
+          setPhotoUrls(urls);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Failed to load photos:', err);
+          setError('Failed to load photos');
+          setLoading(false);
+        });
+    }
+  }, [isOpen, photoPaths]);
+
+  if (photoPaths.length === 0) return null;
 
   return (
     <>
@@ -127,26 +205,40 @@ function MobilePhotoViewer({ photoPaths }) {
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
-            <div className="grid gap-3" style={{ gridTemplateColumns: photoCount === 1 ? '1fr' : 'repeat(2, 1fr)' }}>
-              {photoPaths.map((path, index) => (
-                <a
-                  key={index}
-                  href={getPhotoUrl(path)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block aspect-square overflow-hidden rounded-lg"
-                >
-                  <img
-                    src={getPhotoUrl(path)}
-                    alt={`Photo ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </a>
-              ))}
-            </div>
-            <p className="text-sm text-gray-400 mt-4 text-center">
-              Tap photo to open full size
-            </p>
+            {loading && (
+              <div className="text-center py-8 text-gray-400">
+                Loading photos...
+              </div>
+            )}
+            {error && (
+              <div className="text-center py-8 text-red-400">
+                {error}
+              </div>
+            )}
+            {!loading && !error && (
+              <>
+                <div className="grid gap-3" style={{ gridTemplateColumns: photoCount === 1 ? '1fr' : 'repeat(2, 1fr)' }}>
+                  {photoUrls.map((url, index) => (
+                    <a
+                      key={index}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block aspect-square overflow-hidden rounded-lg"
+                    >
+                      <img
+                        src={url}
+                        alt={`Photo ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </a>
+                  ))}
+                </div>
+                <p className="text-sm text-gray-400 mt-4 text-center">
+                  Tap photo to open full size
+                </p>
+              </>
+            )}
           </div>
         </div>
       )}

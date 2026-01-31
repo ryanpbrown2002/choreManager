@@ -36,8 +36,7 @@ const upload = multer({
 
 const MAX_PHOTOS = 3;
 
-// Secure photo serving endpoint - requires authentication and group membership
-// Note: This endpoint accepts token via query param since <img> tags can't send headers
+// Secure photo serving endpoint - uses short-lived photo tokens
 // Must be defined BEFORE router.use(authenticate) to handle auth manually
 router.get('/photos/:filename', (req, res) => {
   try {
@@ -48,34 +47,25 @@ router.get('/photos/:filename', (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    // Verify the token and get user info
+    // Verify the short-lived photo token
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch {
-      return res.status(401).json({ error: 'Invalid or expired token' });
+    } catch (err) {
+      if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ error: 'Photo link expired' });
+      }
+      return res.status(401).json({ error: 'Invalid token' });
     }
 
-    const user = User.findById(decoded.userId);
-    if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+    // Verify this is a photo token and matches the requested file
+    if (decoded.type !== 'photo' || decoded.filename !== filename) {
+      return res.status(403).json({ error: 'Token not valid for this photo' });
     }
 
     // Prevent directory traversal attacks
     if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
       return res.status(400).json({ error: 'Invalid filename' });
-    }
-
-    // Find the assignment that contains this photo
-    const assignment = Assignment.findByPhotoPath(filename);
-
-    if (!assignment) {
-      return res.status(404).json({ error: 'Photo not found' });
-    }
-
-    // Verify the requesting user belongs to the same group
-    if (assignment.group_id !== user.group_id) {
-      return res.status(403).json({ error: 'Access denied' });
     }
 
     // Construct the file path and verify it exists
@@ -101,6 +91,50 @@ router.get('/photos/:filename', (req, res) => {
 
 // All routes below require authentication
 router.use(authenticate);
+
+// Generate a short-lived token for photo access (5 minutes)
+router.post('/photo-token', (req, res) => {
+  try {
+    const { filename } = req.body;
+
+    if (!filename) {
+      return res.status(400).json({ error: 'Filename is required' });
+    }
+
+    // Prevent directory traversal attacks
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+
+    // Find the assignment that contains this photo
+    const assignment = Assignment.findByPhotoPath(filename);
+
+    if (!assignment) {
+      return res.status(404).json({ error: 'Photo not found' });
+    }
+
+    // Verify the requesting user belongs to the same group
+    if (assignment.group_id !== req.groupId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Generate a short-lived token (5 minutes) specifically for this photo
+    const photoToken = jwt.sign(
+      {
+        type: 'photo',
+        filename: filename,
+        groupId: req.groupId
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '5m' }
+    );
+
+    res.json({ token: photoToken });
+  } catch (error) {
+    console.error('Generate photo token error:', error);
+    res.status(500).json({ error: 'Failed to generate photo token' });
+  }
+});
 
 router.get('/all', (req, res) => {
   try {
@@ -269,7 +303,9 @@ router.post('/rotate', requireAdmin, (req, res) => {
       return res.status(400).json({ error: 'weekStart is required' });
     }
 
+    // Get chores ordered by order_num
     const chores = Chore.findByGroup(req.groupId);
+    // Get members in rotation with their rotation_position
     const members = User.findByGroupInRotation(req.groupId);
 
     if (members.length === 0) {
@@ -280,38 +316,40 @@ router.post('/rotate', requireAdmin, (req, res) => {
       return res.status(400).json({ error: 'No chores to assign' });
     }
 
-    const currentAssignments = Assignment.findByGroup(req.groupId);
+    const totalMembers = members.length;
+    const numChores = chores.length;
 
-    // Build a map of chore -> last assigned user (most recent assignment)
-    const choreToLastUser = {};
-    currentAssignments.forEach(assignment => {
-      if (!choreToLastUser[assignment.chore_id]) {
-        choreToLastUser[assignment.chore_id] = assignment.user_id;
-      }
-    });
+    // Rotate all members: new_pos = (current_pos % total_members) + 1
+    // Update each member's rotation_position in DB
+    for (const member of members) {
+      const currentPos = member.rotation_position || 1;
+      const newPos = (currentPos % totalMembers) + 1;
+      User.updateRotationPosition(member.id, newPos);
+      member.rotation_position = newPos; // Update in-memory for assignment logic
+    }
 
     const createdAssignments = [];
 
-    chores.forEach((chore) => {
-      // Find the last person assigned to this chore
-      const lastUserId = choreToLastUser[chore.id];
-      const lastUserIndex = members.findIndex(m => m.id === lastUserId);
-
-      // Rotate to the next person (or start at 0 if no previous assignment)
-      const nextUserIndex = lastUserIndex === -1 ? 0 : (lastUserIndex + 1) % members.length;
-      const nextUser = members[nextUserIndex];
-
-      // Create new assignment for the specified week
-      const assignmentId = generateId();
-      Assignment.create({
-        id: assignmentId,
-        choreId: chore.id,
-        userId: nextUser.id,
-        weekStart
-      });
-
-      createdAssignments.push(Assignment.findById(assignmentId));
-    });
+    // For each member with new_pos <= num_chores, assign chore at that position
+    // Chores are ordered by order_num, so chore at index 0 has order_num 1, etc.
+    for (const member of members) {
+      const pos = member.rotation_position;
+      if (pos <= numChores) {
+        // Find the chore at this position (order_num = pos)
+        const chore = chores.find(c => c.order_num === pos);
+        if (chore) {
+          const assignmentId = generateId();
+          Assignment.create({
+            id: assignmentId,
+            choreId: chore.id,
+            userId: member.id,
+            weekStart
+          });
+          createdAssignments.push(Assignment.findById(assignmentId));
+        }
+      }
+      // Members with pos > numChores get no assignment (they're "off")
+    }
 
     res.json({
       message: 'Chores rotated successfully',
