@@ -249,6 +249,7 @@ function MobilePhotoViewer({ photoPaths }) {
 export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, onAdminComplete, onReject, onAssignmentsChange, weekStart, onWeekChange, chores, members }) {
   const { user } = useAuth();
   const [rotating, setRotating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [completing, setCompleting] = useState(null);
   const [rejecting, setRejecting] = useState(null);
   const isAdmin = user?.role === 'admin';
@@ -286,6 +287,24 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
       console.error('Failed to rotate assignments:', err);
     } finally {
       setRotating(false);
+    }
+  };
+
+  const handleDeleteWeek = async () => {
+    const weekLabel = formatWeekRange(weekStart);
+    if (!window.confirm(`Delete ALL assignments for ${weekLabel}? This cannot be undone.`)) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const weekStartTs = getWeekStartTimestamp(weekStart);
+      await api.delete(`/assignments/week/${weekStartTs}`);
+      onAssignmentsChange?.();
+    } catch (err) {
+      console.error('Failed to delete week assignments:', err);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -387,9 +406,9 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
             <span className="sm:hidden">&rarr;</span>
           </button>
         </div>
-        {/* Rotate button for admins */}
+        {/* Admin buttons */}
         {isAdmin && (
-          <div className="mt-3 flex justify-center">
+          <div className="mt-3 flex flex-col sm:flex-row justify-center gap-2">
             <button
               onClick={handleRotate}
               disabled={rotating || !chores?.length || !members?.length}
@@ -397,6 +416,15 @@ export default function WeeklyAssignmentsTable({ assignments, onCompleteClick, o
             >
               {rotating ? 'Rotating...' : 'Rotate All Chores'}
             </button>
+            {weekAssignments.length > 0 && (
+              <button
+                onClick={handleDeleteWeek}
+                disabled={deleting}
+                className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 text-sm"
+              >
+                {deleting ? 'Deleting...' : 'Delete All This Week'}
+              </button>
+            )}
           </div>
         )}
       </div>

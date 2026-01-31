@@ -303,7 +303,7 @@ router.post('/rotate', requireAdmin, (req, res) => {
       return res.status(400).json({ error: 'weekStart is required' });
     }
 
-    // Get chores ordered by order_num
+    // Get chores ordered by order_num (array index 0 = first chore, etc.)
     const chores = Chore.findByGroup(req.groupId);
     // Get members in rotation with their rotation_position
     const members = User.findByGroupInRotation(req.groupId);
@@ -319,36 +319,50 @@ router.post('/rotate', requireAdmin, (req, res) => {
     const totalMembers = members.length;
     const numChores = chores.length;
 
-    // Rotate all members: new_pos = (current_pos % total_members) + 1
-    // Update each member's rotation_position in DB
+    // First, normalize positions to ensure they're 1, 2, 3... (fix any gaps or duplicates)
+    // Sort members by current position (or name if position is null)
+    members.sort((a, b) => {
+      const posA = a.rotation_position ?? Infinity;
+      const posB = b.rotation_position ?? Infinity;
+      if (posA !== posB) return posA - posB;
+      return a.name.localeCompare(b.name);
+    });
+
+    // Assign sequential positions 1, 2, 3...
+    members.forEach((member, index) => {
+      member.rotation_position = index + 1;
+    });
+
+    // Now rotate: each person moves to the next position
+    // new_pos = (current_pos % total_members) + 1
+    // So position 1 -> 2, position 2 -> 3, ..., position N -> 1
     for (const member of members) {
-      const currentPos = member.rotation_position || 1;
+      const currentPos = member.rotation_position;
       const newPos = (currentPos % totalMembers) + 1;
       User.updateRotationPosition(member.id, newPos);
-      member.rotation_position = newPos; // Update in-memory for assignment logic
+      member.rotation_position = newPos;
     }
 
     const createdAssignments = [];
 
-    // For each member with new_pos <= num_chores, assign chore at that position
-    // Chores are ordered by order_num, so chore at index 0 has order_num 1, etc.
+    // Assign chores based on position using array index (not order_num)
+    // Position 1 gets chores[0], position 2 gets chores[1], etc.
     for (const member of members) {
       const pos = member.rotation_position;
-      if (pos <= numChores) {
-        // Find the chore at this position (order_num = pos)
-        const chore = chores.find(c => c.order_num === pos);
-        if (chore) {
-          const assignmentId = generateId();
-          Assignment.create({
-            id: assignmentId,
-            choreId: chore.id,
-            userId: member.id,
-            weekStart
-          });
-          createdAssignments.push(Assignment.findById(assignmentId));
-        }
+      const choreIndex = pos - 1; // Convert 1-based position to 0-based index
+
+      if (choreIndex < numChores) {
+        const chore = chores[choreIndex];
+        const assignmentId = generateId();
+        Assignment.create({
+          id: assignmentId,
+          choreId: chore.id,
+          userId: member.id,
+          weekStart
+        });
+        createdAssignments.push(Assignment.findById(assignmentId));
       }
-      // Members with pos > numChores get no assignment (they're "off")
+      // Members with position > numChores get no assignment (they're "off")
     }
 
     res.json({
@@ -358,6 +372,27 @@ router.post('/rotate', requireAdmin, (req, res) => {
   } catch (error) {
     console.error('Rotate assignments error:', error);
     res.status(500).json({ error: 'Failed to rotate assignments' });
+  }
+});
+
+// Delete all assignments for a specific week
+router.delete('/week/:weekStart', requireAdmin, (req, res) => {
+  try {
+    const weekStart = parseInt(req.params.weekStart, 10);
+
+    if (isNaN(weekStart)) {
+      return res.status(400).json({ error: 'Invalid weekStart' });
+    }
+
+    const deleted = Assignment.deleteByWeek(req.groupId, weekStart);
+
+    res.json({
+      message: 'Assignments deleted successfully',
+      deletedCount: deleted.changes
+    });
+  } catch (error) {
+    console.error('Delete week assignments error:', error);
+    res.status(500).json({ error: 'Failed to delete assignments' });
   }
 });
 

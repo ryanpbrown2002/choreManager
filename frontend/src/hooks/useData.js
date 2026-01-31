@@ -88,7 +88,13 @@ export function useChores() {
     return response.data;
   };
 
-  return { chores, loading, error, refetch: fetchChores, createChore, updateChore, deleteChore, reorderChore };
+  const reorderChores = async (orderedIds) => {
+    const response = await api.post('/chores/reorder', { orderedIds });
+    setChores(response.data);
+    return response.data;
+  };
+
+  return { chores, loading, error, refetch: fetchChores, createChore, updateChore, deleteChore, reorderChore, reorderChores };
 }
 
 export function useAssignments() {
@@ -139,7 +145,13 @@ export function useAssignments() {
     return response.data;
   };
 
-  return { assignments, loading, error, refetch: fetchAssignments, completeAssignment, adminCompleteAssignment, rejectAssignment };
+  const deleteWeekAssignments = async (weekStartTimestamp) => {
+    const response = await api.delete(`/assignments/week/${weekStartTimestamp}`);
+    await fetchAssignments();
+    return response.data;
+  };
+
+  return { assignments, loading, error, refetch: fetchAssignments, completeAssignment, adminCompleteAssignment, rejectAssignment, deleteWeekAssignments };
 }
 
 export function useGroup() {

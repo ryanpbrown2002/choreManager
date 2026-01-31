@@ -97,8 +97,30 @@ router.patch('/:id', requireAdmin, (req, res) => {
 
 router.post('/reorder', requireAdmin, (req, res) => {
   try {
-    const { choreId, direction } = req.body;
+    const { choreId, direction, orderedIds } = req.body;
 
+    // Bulk reorder mode: orderedIds is an array of chore IDs in the new order
+    if (orderedIds && Array.isArray(orderedIds)) {
+      // Verify all chores belong to this group
+      const allChores = Chore.findByGroup(req.groupId);
+      const groupChoreIds = new Set(allChores.map(c => c.id));
+
+      for (const id of orderedIds) {
+        if (!groupChoreIds.has(id)) {
+          return res.status(403).json({ error: 'Access denied - chore not in group' });
+        }
+      }
+
+      // Update order numbers based on position in array
+      orderedIds.forEach((id, index) => {
+        Chore.update(id, { orderNum: index + 1 });
+      });
+
+      const updatedChores = Chore.findByGroup(req.groupId);
+      return res.json(updatedChores);
+    }
+
+    // Single swap mode (up/down arrows)
     if (!choreId || !direction) {
       return res.status(400).json({ error: 'choreId and direction are required' });
     }
