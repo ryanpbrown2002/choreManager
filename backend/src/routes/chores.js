@@ -97,68 +97,27 @@ router.patch('/:id', requireAdmin, (req, res) => {
 
 router.post('/reorder', requireAdmin, (req, res) => {
   try {
-    const { choreId, direction, orderedIds } = req.body;
+    const { orderedIds } = req.body;
 
-    // Bulk reorder mode: orderedIds is an array of chore IDs in the new order
-    if (orderedIds && Array.isArray(orderedIds)) {
-      // Verify all chores belong to this group
-      const allChores = Chore.findByGroup(req.groupId);
-      const groupChoreIds = new Set(allChores.map(c => c.id));
-
-      for (const id of orderedIds) {
-        if (!groupChoreIds.has(id)) {
-          return res.status(403).json({ error: 'Access denied - chore not in group' });
-        }
-      }
-
-      // Update order numbers based on position in array
-      orderedIds.forEach((id, index) => {
-        Chore.update(id, { orderNum: index + 1 });
-      });
-
-      const updatedChores = Chore.findByGroup(req.groupId);
-      return res.json(updatedChores);
+    if (!orderedIds || !Array.isArray(orderedIds)) {
+      return res.status(400).json({ error: 'orderedIds array is required' });
     }
 
-    // Single swap mode (up/down arrows)
-    if (!choreId || !direction) {
-      return res.status(400).json({ error: 'choreId and direction are required' });
-    }
-
-    if (!['up', 'down'].includes(direction)) {
-      return res.status(400).json({ error: 'Direction must be "up" or "down"' });
-    }
-
-    const chore = Chore.findById(choreId);
-    if (!chore) {
-      return res.status(404).json({ error: 'Chore not found' });
-    }
-
-    if (chore.group_id !== req.groupId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
+    // Verify all chores belong to this group
     const allChores = Chore.findByGroup(req.groupId);
-    const currentIndex = allChores.findIndex(c => c.id === choreId);
+    const groupChoreIds = new Set(allChores.map(c => c.id));
 
-    // Determine the target index
-    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-
-    // Check bounds
-    if (targetIndex < 0 || targetIndex >= allChores.length) {
-      return res.status(400).json({ error: 'Cannot move chore in that direction' });
+    for (const id of orderedIds) {
+      if (!groupChoreIds.has(id)) {
+        return res.status(403).json({ error: 'Access denied - chore not in group' });
+      }
     }
 
-    const targetChore = allChores[targetIndex];
+    // Update order numbers based on position in array
+    orderedIds.forEach((id, index) => {
+      Chore.update(id, { orderNum: index + 1 });
+    });
 
-    // Swap order numbers
-    const currentOrderNum = chore.order_num;
-    const targetOrderNum = targetChore.order_num;
-
-    Chore.update(choreId, { orderNum: targetOrderNum });
-    Chore.update(targetChore.id, { orderNum: currentOrderNum });
-
-    // Return updated chore list
     const updatedChores = Chore.findByGroup(req.groupId);
     res.json(updatedChores);
   } catch (error) {

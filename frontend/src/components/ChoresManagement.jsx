@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
-export default function ChoresManagement({ chores, onCreateChore, onUpdateChore, onDeleteChore, onReorderChore, onReorderChores }) {
+export default function ChoresManagement({ chores, onCreateChore, onUpdateChore, onDeleteChore, onReorderChores }) {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [showForm, setShowForm] = useState(false);
@@ -223,7 +223,7 @@ export default function ChoresManagement({ chores, onCreateChore, onUpdateChore,
       )}
 
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-        Drag chores to reorder, or use the arrows
+        Drag chores to reorder
       </p>
 
       <div className="space-y-1">
@@ -250,30 +250,6 @@ export default function ChoresManagement({ chores, onCreateChore, onUpdateChore,
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"/>
                 </svg>
-              </div>
-
-              {/* Reorder buttons */}
-              <div className="flex flex-col flex-shrink-0">
-                <button
-                  onClick={(e) => { e.stopPropagation(); onReorderChore?.(chore.id, 'up'); }}
-                  disabled={index === 0}
-                  className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
-                  title="Move up"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onReorderChore?.(chore.id, 'down'); }}
-                  disabled={index === chores.length - 1}
-                  className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
-                  title="Move down"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
               </div>
 
               <div className="flex-1 min-w-0">

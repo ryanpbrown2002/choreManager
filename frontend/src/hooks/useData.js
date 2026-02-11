@@ -82,19 +82,13 @@ export function useChores() {
     await fetchChores();
   };
 
-  const reorderChore = async (choreId, direction) => {
-    const response = await api.post('/chores/reorder', { choreId, direction });
-    setChores(response.data);
-    return response.data;
-  };
-
   const reorderChores = async (orderedIds) => {
     const response = await api.post('/chores/reorder', { orderedIds });
     setChores(response.data);
     return response.data;
   };
 
-  return { chores, loading, error, refetch: fetchChores, createChore, updateChore, deleteChore, reorderChore, reorderChores };
+  return { chores, loading, error, refetch: fetchChores, createChore, updateChore, deleteChore, reorderChores };
 }
 
 export function useAssignments() {
