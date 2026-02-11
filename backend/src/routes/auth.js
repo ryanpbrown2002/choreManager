@@ -1,7 +1,8 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { User, Group } from '../models/index.js';
+import { User, Group, PasswordReset } from '../models/index.js';
 import { generateId, generateInviteCode } from '../utils/index.js';
+import { sendEmail } from '../services/email.js';
 
 const router = express.Router();
 
@@ -85,6 +86,73 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const genericMessage = 'If that email is registered, a reset link has been sent.';
+
+    const user = User.findByEmail(email);
+    if (!user) {
+      return res.json({ message: genericMessage });
+    }
+
+    const rawToken = PasswordReset.create(user.id);
+    const resetUrl = `${process.env.APP_URL}/reset-password?token=${rawToken}`;
+
+    await sendEmail({
+      to: user.email,
+      subject: 'Chorho - Password Reset',
+      html: `
+        <h2>Password Reset</h2>
+        <p>Hi ${user.name},</p>
+        <p>You requested a password reset for your Chorho account.</p>
+        <p><a href="${resetUrl}" style="display:inline-block;padding:12px 24px;background-color:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">Reset Password</a></p>
+        <p>Or copy this link: ${resetUrl}</p>
+        <p>This link expires in 1 hour.</p>
+        <p>If you didn't request this, you can safely ignore this email.</p>
+      `,
+      text: `Hi ${user.name},\n\nYou requested a password reset. Visit this link to reset your password:\n\n${resetUrl}\n\nThis link expires in 1 hour.\n\nIf you didn't request this, ignore this email.`,
+    });
+
+    res.json({ message: genericMessage });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.json({ message: 'If that email is registered, a reset link has been sent.' });
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    const resetRecord = PasswordReset.findValidToken(token);
+    if (!resetRecord) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    await User.updatePassword(resetRecord.user_id, newPassword);
+    PasswordReset.markUsed(resetRecord.id);
+
+    res.json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
   }
 });
 

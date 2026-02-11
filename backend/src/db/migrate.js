@@ -81,4 +81,23 @@ try {
   console.error('Migration error adding rotation_position:', error.message);
 }
 
+// Create password_resets table if it doesn't exist
+try {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS password_resets (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      token_hash TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,
+      used_at INTEGER,
+      created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+  db.exec('CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token_hash)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id)');
+} catch (error) {
+  console.error('Migration error creating password_resets:', error.message);
+}
+
 console.log('Migrations completed successfully!');
