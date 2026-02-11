@@ -9,6 +9,7 @@ import userRoutes from './routes/users.js';
 import groupRoutes from './routes/groups.js';
 import choreRoutes from './routes/chores.js';
 import assignmentRoutes from './routes/assignments.js';
+import notificationRoutes from './routes/notifications.js';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/chores', choreRoutes);
 app.use('/api/assignments', assignmentRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

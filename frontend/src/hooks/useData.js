@@ -40,7 +40,12 @@ export function useMembers() {
     return response.data;
   };
 
-  return { members, loading, error, refetch: fetchMembers, updateRole, deleteMember, updateRotation };
+  const notifyMembers = async (userIds) => {
+    const response = await api.post('/notifications/send', { userIds });
+    return response.data;
+  };
+
+  return { members, loading, error, refetch: fetchMembers, updateRole, deleteMember, updateRotation, notifyMembers };
 }
 
 export function useChores() {
@@ -170,5 +175,11 @@ export function useGroup() {
     fetchGroup();
   }, []);
 
-  return { group, loading, error, refetch: fetchGroup };
+  const updateNotificationMessage = async (message) => {
+    const response = await api.patch('/groups/notification-message', { message });
+    setGroup(response.data);
+    return response.data;
+  };
+
+  return { group, loading, error, refetch: fetchGroup, updateNotificationMessage };
 }

@@ -100,4 +100,16 @@ try {
   console.error('Migration error creating password_resets:', error.message);
 }
 
+// Add notification_message column to groups if it doesn't exist
+try {
+  const groupColumns = db.prepare("PRAGMA table_info(groups)").all();
+  const hasNotificationMessage = groupColumns.some(col => col.name === 'notification_message');
+  if (!hasNotificationMessage) {
+    console.log('Adding notification_message column to groups table...');
+    db.exec("ALTER TABLE groups ADD COLUMN notification_message TEXT DEFAULT 'Hey {name}, just a friendly reminder that you have chores to complete this week!'");
+  }
+} catch (error) {
+  console.error('Migration error adding notification_message:', error.message);
+}
+
 console.log('Migrations completed successfully!');

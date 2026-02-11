@@ -31,6 +31,10 @@ export const Group = {
     ).all(id);
   },
 
+  updateNotificationMessage(id, message) {
+    return db.prepare('UPDATE groups SET notification_message = ? WHERE id = ?').run(message, id);
+  },
+
   delete(id) {
     return db.prepare('DELETE FROM groups WHERE id = ?').run(id);
   }

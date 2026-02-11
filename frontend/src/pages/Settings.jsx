@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
@@ -10,9 +10,32 @@ import ChoresManagement from '../components/ChoresManagement';
 export default function Settings() {
   const { user } = useAuth();
   const { darkMode, toggleDarkMode } = useTheme();
-  const { group } = useGroup();
+  const { group, updateNotificationMessage } = useGroup();
   const { members, updateRole, deleteMember, updateRotation } = useMembers();
   const { chores, createChore, updateChore, deleteChore, reorderChores } = useChores();
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [savingMessage, setSavingMessage] = useState(false);
+  const [messageSaved, setMessageSaved] = useState(false);
+
+  useEffect(() => {
+    if (group?.notification_message) {
+      setNotificationMessage(group.notification_message);
+    }
+  }, [group?.notification_message]);
+
+  const handleSaveNotificationMessage = async () => {
+    setSavingMessage(true);
+    setMessageSaved(false);
+    try {
+      await updateNotificationMessage(notificationMessage);
+      setMessageSaved(true);
+      setTimeout(() => setMessageSaved(false), 3000);
+    } catch (err) {
+      console.error('Failed to save notification message:', err);
+    } finally {
+      setSavingMessage(false);
+    }
+  };
 
   return (
     <Layout>
@@ -77,6 +100,33 @@ export default function Settings() {
             </div>
           </div>
         </div>
+
+        {user?.role === 'admin' && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Notification Message</h2>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-3">
+              Customize the email message sent when notifying members about their chores. Use <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{'{name}'}</code> to insert the member's name.
+            </p>
+            <textarea
+              value={notificationMessage}
+              onChange={(e) => setNotificationMessage(e.target.value)}
+              rows={3}
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="flex items-center gap-3 mt-3">
+              <button
+                onClick={handleSaveNotificationMessage}
+                disabled={savingMessage}
+                className="px-4 py-2 rounded-md text-sm bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+              >
+                {savingMessage ? 'Saving...' : 'Save Message'}
+              </button>
+              {messageSaved && (
+                <span className="text-sm text-green-600 dark:text-green-400">Saved!</span>
+              )}
+            </div>
+          </div>
+        )}
 
         <ChoresManagement
           chores={chores}

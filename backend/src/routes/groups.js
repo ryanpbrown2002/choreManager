@@ -49,4 +49,22 @@ router.patch('/', requireAdmin, (req, res) => {
   }
 });
 
+router.patch('/notification-message', requireAdmin, (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ error: 'Notification message is required' });
+    }
+
+    Group.updateNotificationMessage(req.groupId, message.trim());
+
+    const updated = Group.findById(req.groupId);
+    res.json(updated);
+  } catch (error) {
+    console.error('Update notification message error:', error);
+    res.status(500).json({ error: 'Failed to update notification message' });
+  }
+});
+
 export default router;
