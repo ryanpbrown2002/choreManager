@@ -11,7 +11,7 @@ export default function Settings() {
   const { user } = useAuth();
   const { darkMode, toggleDarkMode } = useTheme();
   const { group, updateNotificationMessage } = useGroup();
-  const { members, updateRole, deleteMember, updateRotation } = useMembers();
+  const { members, updateRole, deleteMember, updateRotation, notifyMembers } = useMembers();
   const { chores, createChore, updateChore, deleteChore, reorderChores } = useChores();
   const [notificationMessage, setNotificationMessage] = useState('');
   const [savingMessage, setSavingMessage] = useState(false);
@@ -141,6 +141,7 @@ export default function Settings() {
           onUpdateRole={updateRole}
           onDeleteMember={deleteMember}
           onUpdateRotation={updateRotation}
+          onNotify={(userIds) => notifyMembers(userIds)}
         />
 
         <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-8">

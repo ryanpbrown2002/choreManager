@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
-export default function MembersTable({ members, onUpdateRole, onDeleteMember, onUpdateRotation }) {
+export default function MembersTable({ members, onUpdateRole, onDeleteMember, onUpdateRotation, onNotify }) {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [updatingRole, setUpdatingRole] = useState(null);
   const [updatingRotation, setUpdatingRotation] = useState(null);
+  const [notifyingId, setNotifyingId] = useState(null);
+  const [notifyingAll, setNotifyingAll] = useState(false);
 
   const handleRoleChange = async (memberId, newRole) => {
     try {
@@ -44,10 +46,43 @@ export default function MembersTable({ members, onUpdateRole, onDeleteMember, on
     }
   };
 
+  const handleNotify = async (memberId) => {
+    setNotifyingId(memberId);
+    try {
+      await onNotify([memberId]);
+    } catch (error) {
+      console.error('Failed to notify member:', error);
+      alert(error.response?.data?.error || 'Failed to send notification');
+    } finally {
+      setNotifyingId(null);
+    }
+  };
+
+  const handleNotifyAll = async () => {
+    setNotifyingAll(true);
+    try {
+      await onNotify([]);
+    } catch (error) {
+      console.error('Failed to notify all:', error);
+      alert(error.response?.data?.error || 'Failed to send notifications');
+    } finally {
+      setNotifyingAll(false);
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-      <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
         <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Members</h2>
+        {isAdmin && onNotify && (
+          <button
+            onClick={handleNotifyAll}
+            disabled={notifyingAll}
+            className="px-3 py-1 rounded-md text-sm bg-yellow-500 hover:bg-yellow-600 text-white disabled:opacity-50"
+          >
+            {notifyingAll ? 'Sending...' : 'Notify All'}
+          </button>
+        )}
       </div>
 
       {/* Desktop Table View */}
@@ -128,14 +163,25 @@ export default function MembersTable({ members, onUpdateRole, onDeleteMember, on
                   </td>
                   {isAdmin && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {!isCurrentUser && (
-                        <button
-                          onClick={() => handleDelete(member.id, member.name)}
-                          className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
-                        >
-                          Delete
-                        </button>
-                      )}
+                      <div className="flex items-center gap-3">
+                        {onNotify && (
+                          <button
+                            onClick={() => handleNotify(member.id)}
+                            disabled={notifyingId === member.id}
+                            className="px-2 py-1 rounded-md text-xs bg-yellow-500 hover:bg-yellow-600 text-white disabled:opacity-50"
+                          >
+                            {notifyingId === member.id ? 'Sending...' : 'Notify'}
+                          </button>
+                        )}
+                        {!isCurrentUser && (
+                          <button
+                            onClick={() => handleDelete(member.id, member.name)}
+                            className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>
@@ -198,14 +244,25 @@ export default function MembersTable({ members, onUpdateRole, onDeleteMember, on
                   />
                   In Rotation
                 </label>
-                {isAdmin && !isCurrentUser && (
-                  <button
-                    onClick={() => handleDelete(member.id, member.name)}
-                    className="text-sm text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
-                  >
-                    Remove
-                  </button>
-                )}
+                <div className="flex items-center gap-3">
+                  {isAdmin && onNotify && (
+                    <button
+                      onClick={() => handleNotify(member.id)}
+                      disabled={notifyingId === member.id}
+                      className="text-sm px-2 py-1 rounded-md text-xs bg-yellow-500 hover:bg-yellow-600 text-white disabled:opacity-50"
+                    >
+                      {notifyingId === member.id ? '...' : 'Notify'}
+                    </button>
+                  )}
+                  {isAdmin && !isCurrentUser && (
+                    <button
+                      onClick={() => handleDelete(member.id, member.name)}
+                      className="text-sm text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           );

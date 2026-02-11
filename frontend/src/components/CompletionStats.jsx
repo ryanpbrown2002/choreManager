@@ -1,11 +1,7 @@
 import { useState } from 'react';
 
-export default function CompletionStats({ assignments, members, chores, user, onNotify, onNotifyAll }) {
+export default function CompletionStats({ assignments, members, chores }) {
   const [viewMode, setViewMode] = useState('members'); // 'members' or 'chores'
-  const [notifyingId, setNotifyingId] = useState(null); // userId being notified
-  const [notifyingAll, setNotifyingAll] = useState(false);
-
-  const isAdmin = user?.role === 'admin';
 
   // Calculate stats by member
   const getMemberStats = () => {
@@ -13,7 +9,6 @@ export default function CompletionStats({ assignments, members, chores, user, on
 
     members.forEach(member => {
       stats[member.id] = {
-        id: member.id,
         name: member.name,
         total: 0,
         completed: 0,
@@ -84,24 +79,6 @@ export default function CompletionStats({ assignments, members, chores, user, on
     return Object.values(stats).sort((a, b) => b.completionRate - a.completionRate);
   };
 
-  const handleNotify = async (userId) => {
-    setNotifyingId(userId);
-    try {
-      await onNotify([userId]);
-    } finally {
-      setNotifyingId(null);
-    }
-  };
-
-  const handleNotifyAll = async () => {
-    setNotifyingAll(true);
-    try {
-      await onNotifyAll();
-    } finally {
-      setNotifyingAll(false);
-    }
-  };
-
   const memberStats = getMemberStats();
   const choreStats = getChoreStats();
   const currentStats = viewMode === 'members' ? memberStats : choreStats;
@@ -112,15 +89,6 @@ export default function CompletionStats({ assignments, members, chores, user, on
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Completion Stats</h2>
           <div className="flex gap-2">
-            {isAdmin && viewMode === 'members' && (
-              <button
-                onClick={handleNotifyAll}
-                disabled={notifyingAll}
-                className="flex-1 sm:flex-none px-3 py-1 rounded-md text-sm bg-yellow-500 hover:bg-yellow-600 text-white disabled:opacity-50"
-              >
-                {notifyingAll ? 'Sending...' : 'Notify All'}
-              </button>
-            )}
             <button
               onClick={() => setViewMode('members')}
               className={`flex-1 sm:flex-none px-3 py-1 rounded-md text-sm ${
@@ -165,17 +133,12 @@ export default function CompletionStats({ assignments, members, chores, user, on
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Completion Rate
               </th>
-              {isAdmin && viewMode === 'members' && (
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Action
-                </th>
-              )}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {currentStats.length === 0 ? (
               <tr>
-                <td colSpan={isAdmin && viewMode === 'members' ? 6 : 5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan="5" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                   No stats available
                 </td>
               </tr>
@@ -207,17 +170,6 @@ export default function CompletionStats({ assignments, members, chores, user, on
                       </div>
                     </div>
                   </td>
-                  {isAdmin && viewMode === 'members' && (
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <button
-                        onClick={() => handleNotify(stat.id)}
-                        disabled={notifyingId === stat.id}
-                        className="px-3 py-1 rounded-md text-xs bg-yellow-500 hover:bg-yellow-600 text-white disabled:opacity-50"
-                      >
-                        {notifyingId === stat.id ? 'Sending...' : 'Notify'}
-                      </button>
-                    </td>
-                  )}
                 </tr>
               ))
             )}
@@ -237,18 +189,7 @@ export default function CompletionStats({ assignments, members, chores, user, on
               <div key={index} className="p-4">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium text-gray-900 dark:text-white">{stat.name}</span>
-                  <div className="flex items-center gap-2">
-                    {isAdmin && viewMode === 'members' && (
-                      <button
-                        onClick={() => handleNotify(stat.id)}
-                        disabled={notifyingId === stat.id}
-                        className="px-2 py-1 rounded-md text-xs bg-yellow-500 hover:bg-yellow-600 text-white disabled:opacity-50"
-                      >
-                        {notifyingId === stat.id ? '...' : 'Notify'}
-                      </button>
-                    )}
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">{stat.completionRate}%</span>
-                  </div>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{stat.completionRate}%</span>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 mb-3">
                   <div

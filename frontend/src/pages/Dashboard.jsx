@@ -10,7 +10,7 @@ import CompletionStats from '../components/CompletionStats';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { members, notifyMembers } = useMembers();
+  const { members } = useMembers();
   const { chores } = useChores();
   const { assignments, completeAssignment, adminCompleteAssignment, rejectAssignment, refetch: refetchAssignments } = useAssignments();
   const { group } = useGroup();
@@ -71,9 +71,6 @@ export default function Dashboard() {
           assignments={assignments}
           members={members}
           chores={chores}
-          user={user}
-          onNotify={(userIds) => notifyMembers(userIds)}
-          onNotifyAll={() => notifyMembers([])}
         />
 
         {selectedAssignment && (
