@@ -47,6 +47,8 @@ export default function MembersTable({ members, onUpdateRole, onDeleteMember, on
   };
 
   const handleNotify = async (memberId) => {
+    const member = members.find(m => m.id === memberId);
+    if (!window.confirm(`Are you sure you want to notify ${member?.name}?`)) return;
     setNotifyingId(memberId);
     try {
       await onNotify([memberId]);
@@ -59,6 +61,7 @@ export default function MembersTable({ members, onUpdateRole, onDeleteMember, on
   };
 
   const handleNotifyAll = async () => {
+    if (!window.confirm('Are you sure you want to notify all members?')) return;
     setNotifyingAll(true);
     try {
       await onNotify([]);
