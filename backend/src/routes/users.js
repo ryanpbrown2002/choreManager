@@ -40,9 +40,9 @@ router.get('/:id', requireSameUser, (req, res) => {
   }
 });
 
-router.patch('/:id', requireSameUser, (req, res) => {
+router.patch('/:id', requireSameUser, async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, password } = req.body;
     const user = User.findById(req.params.id);
 
     if (!user) {
@@ -55,6 +55,22 @@ router.patch('/:id', requireSameUser, (req, res) => {
 
     if (name && name.length > 100) return res.status(400).json({ error: 'Name must be 100 characters or less' });
     if (email && email.length > 254) return res.status(400).json({ error: 'Email must be 254 characters or less' });
+
+    // Require password verification when changing email
+    if (email && email !== user.email) {
+      if (!password) {
+        return res.status(400).json({ error: 'Password is required to change email' });
+      }
+      const validPassword = await User.verifyPassword(user, password);
+      if (!validPassword) {
+        return res.status(401).json({ error: 'Incorrect password' });
+      }
+      // Check if email is already taken
+      const existing = User.findByEmail(email);
+      if (existing && existing.id !== user.id) {
+        return res.status(400).json({ error: 'Email already in use' });
+      }
+    }
 
     User.update(req.params.id, { name, email });
 

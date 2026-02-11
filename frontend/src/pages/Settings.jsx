@@ -3,12 +3,13 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { useGroup, useMembers, useChores } from '../hooks/useData';
+import { api } from '../api/client';
 import Layout from '../components/Layout';
 import MembersTable from '../components/MembersTable';
 import ChoresManagement from '../components/ChoresManagement';
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { darkMode, toggleDarkMode } = useTheme();
   const { group, updateNotificationMessage } = useGroup();
   const { members, updateRole, deleteMember, updateRotation, notifyMembers } = useMembers();
@@ -16,6 +17,61 @@ export default function Settings() {
   const [notificationMessage, setNotificationMessage] = useState('');
   const [savingMessage, setSavingMessage] = useState(false);
   const [messageSaved, setMessageSaved] = useState(false);
+
+  // Profile editing state
+  const [editingField, setEditingField] = useState(null); // 'name', 'email', 'password'
+  const [profileName, setProfileName] = useState('');
+  const [profileEmail, setProfileEmail] = useState('');
+  const [profilePassword, setProfilePassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [profileError, setProfileError] = useState('');
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState('');
+
+  const startEditing = (field) => {
+    setEditingField(field);
+    setProfileError('');
+    setProfileSuccess('');
+    setProfilePassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    if (field === 'name') setProfileName(user?.name || '');
+    if (field === 'email') setProfileEmail(user?.email || '');
+  };
+
+  const cancelEditing = () => {
+    setEditingField(null);
+    setProfileError('');
+    setProfileSuccess('');
+  };
+
+  const handleSaveProfile = async () => {
+    setProfileError('');
+    setProfileSaving(true);
+    try {
+      if (editingField === 'name') {
+        if (!profileName.trim()) { setProfileError('Name is required'); setProfileSaving(false); return; }
+        await api.patch(`/users/${user.id}`, { name: profileName.trim() });
+      } else if (editingField === 'email') {
+        if (!profileEmail.trim()) { setProfileError('Email is required'); setProfileSaving(false); return; }
+        if (!profilePassword) { setProfileError('Password is required to change email'); setProfileSaving(false); return; }
+        await api.patch(`/users/${user.id}`, { email: profileEmail.trim(), password: profilePassword });
+      } else if (editingField === 'password') {
+        if (!profilePassword) { setProfileError('Current password is required'); setProfileSaving(false); return; }
+        if (newPassword.length < 6) { setProfileError('New password must be at least 6 characters'); setProfileSaving(false); return; }
+        if (newPassword !== confirmPassword) { setProfileError('Passwords do not match'); setProfileSaving(false); return; }
+        await api.patch(`/users/${user.id}/password`, { currentPassword: profilePassword, newPassword });
+      }
+      await refreshUser();
+      setProfileSuccess('Updated successfully');
+      setTimeout(() => { setEditingField(null); setProfileSuccess(''); }, 1500);
+    } catch (err) {
+      setProfileError(err.response?.data?.error || 'Failed to update');
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   useEffect(() => {
     if (group?.notification_message) {
@@ -66,18 +122,136 @@ export default function Settings() {
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
           <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Profile</h2>
-          <div className="space-y-3">
+          <div className="space-y-4">
+            {/* Name */}
             <div>
               <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Name</label>
-              <p className="text-gray-900 dark:text-white">{user?.name}</p>
+              {editingField === 'name' ? (
+                <div className="mt-1 space-y-2">
+                  <input
+                    type="text"
+                    value={profileName}
+                    onChange={(e) => setProfileName(e.target.value)}
+                    maxLength={100}
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {profileError && <p className="text-sm text-red-500">{profileError}</p>}
+                  {profileSuccess && <p className="text-sm text-green-500">{profileSuccess}</p>}
+                  <div className="flex gap-2">
+                    <button onClick={handleSaveProfile} disabled={profileSaving} className="px-3 py-1 rounded-md text-sm bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
+                      {profileSaving ? 'Saving...' : 'Save'}
+                    </button>
+                    <button onClick={cancelEditing} className="px-3 py-1 rounded-md text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-gray-900 dark:text-white">{user?.name}</p>
+                  <button onClick={() => startEditing('name')} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                  </button>
+                </div>
+              )}
             </div>
+
+            {/* Email */}
             <div>
               <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Email</label>
-              <p className="text-gray-900 dark:text-white break-all">{user?.email}</p>
+              {editingField === 'email' ? (
+                <div className="mt-1 space-y-2">
+                  <input
+                    type="email"
+                    value={profileEmail}
+                    onChange={(e) => setProfileEmail(e.target.value)}
+                    maxLength={254}
+                    placeholder="New email"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <input
+                    type="password"
+                    value={profilePassword}
+                    onChange={(e) => setProfilePassword(e.target.value)}
+                    maxLength={128}
+                    placeholder="Confirm your password"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {profileError && <p className="text-sm text-red-500">{profileError}</p>}
+                  {profileSuccess && <p className="text-sm text-green-500">{profileSuccess}</p>}
+                  <div className="flex gap-2">
+                    <button onClick={handleSaveProfile} disabled={profileSaving} className="px-3 py-1 rounded-md text-sm bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
+                      {profileSaving ? 'Saving...' : 'Save'}
+                    </button>
+                    <button onClick={cancelEditing} className="px-3 py-1 rounded-md text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-gray-900 dark:text-white break-all">{user?.email}</p>
+                  <button onClick={() => startEditing('email')} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex-shrink-0">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                  </button>
+                </div>
+              )}
             </div>
+
+            {/* Password */}
+            <div>
+              <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Password</label>
+              {editingField === 'password' ? (
+                <div className="mt-1 space-y-2">
+                  <input
+                    type="password"
+                    value={profilePassword}
+                    onChange={(e) => setProfilePassword(e.target.value)}
+                    maxLength={128}
+                    placeholder="Current password"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    maxLength={128}
+                    placeholder="New password"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    maxLength={128}
+                    placeholder="Confirm new password"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {profileError && <p className="text-sm text-red-500">{profileError}</p>}
+                  {profileSuccess && <p className="text-sm text-green-500">{profileSuccess}</p>}
+                  <div className="flex gap-2">
+                    <button onClick={handleSaveProfile} disabled={profileSaving} className="px-3 py-1 rounded-md text-sm bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
+                      {profileSaving ? 'Saving...' : 'Save'}
+                    </button>
+                    <button onClick={cancelEditing} className="px-3 py-1 rounded-md text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-gray-900 dark:text-white">••••••••</p>
+                  <button onClick={() => startEditing('password')} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Role (display only) */}
             <div>
               <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Role</label>
-              <p className="text-gray-900 dark:text-white capitalize">{user?.role}</p>
+              <p className="text-gray-900 dark:text-white capitalize mt-1">{user?.role}</p>
             </div>
           </div>
         </div>
