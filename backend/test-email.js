@@ -1,125 +1,148 @@
 import 'dotenv/config';
-import nodemailer from 'nodemailer';
-import dns from 'dns';
-import net from 'net';
 
-const SMTP_HOST = process.env.SMTP_HOST;
-const SMTP_PORT = parseInt(process.env.SMTP_PORT, 10);
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
+const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY;
+const MAILGUN_DOMAIN = process.env.MAILGUN_DOMAIN;
 const EMAIL_FROM = process.env.EMAIL_FROM;
 
 // Change this to whatever address you want the test email sent to
-const TEST_RECIPIENT = process.env.SMTP_USER;
+const TEST_RECIPIENT = 'chorhoj@gmail.com';
 
-console.log('=== Email Connectivity Test ===\n');
+const MAILGUN_BASE_URL = `https://api.mailgun.net/v3/${MAILGUN_DOMAIN}`;
+const authHeader = 'Basic ' + Buffer.from(`api:${MAILGUN_API_KEY}`).toString('base64');
+
+console.log('=== Mailgun Email Connectivity Test ===\n');
 console.log('Config:');
-console.log(`  SMTP_HOST: ${SMTP_HOST}`);
-console.log(`  SMTP_PORT: ${SMTP_PORT}`);
-console.log(`  SMTP_USER: ${SMTP_USER}`);
-console.log(`  SMTP_PASS: ${SMTP_PASS ? '***' + SMTP_PASS.slice(-4) : 'NOT SET'}`);
-console.log(`  EMAIL_FROM: ${EMAIL_FROM}`);
-console.log(`  TEST_RECIPIENT: ${TEST_RECIPIENT}\n`);
+console.log(`  MAILGUN_API_KEY: ${MAILGUN_API_KEY ? '***' + MAILGUN_API_KEY.slice(-4) : 'NOT SET'}`);
+console.log(`  MAILGUN_DOMAIN:  ${MAILGUN_DOMAIN}`);
+console.log(`  EMAIL_FROM:      ${EMAIL_FROM}`);
+console.log(`  TEST_RECIPIENT:  ${TEST_RECIPIENT}\n`);
 
-// Step 1: DNS resolution
-async function testDNS() {
-  console.log('--- Step 1: DNS Resolution ---');
+// Step 1: Verify API key by fetching domain info
+async function testApiKey() {
+  console.log('--- Step 1: Verify API Key & Domain ---');
   try {
-    const addresses = await dns.promises.resolve4(SMTP_HOST);
-    console.log(`  OK - ${SMTP_HOST} resolves to: ${addresses.join(', ')}\n`);
-    return true;
+    const res = await fetch(`https://api.mailgun.net/v3/domains/${MAILGUN_DOMAIN}`, {
+      headers: { Authorization: authHeader },
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      console.log(`  FAIL (${res.status}): ${body}`);
+      if (res.status === 401) {
+        console.log('  -> Your MAILGUN_API_KEY is invalid. Check it in Mailgun → Settings → API Keys.');
+      }
+      if (res.status === 404) {
+        console.log(`  -> Domain "${MAILGUN_DOMAIN}" not found. Add it in Mailgun → Sending → Domains.`);
+      }
+      console.log();
+      return false;
+    }
+
+    const data = await res.json();
+    const domain = data.domain;
+    console.log(`  OK - Domain: ${domain.name}`);
+    console.log(`  State: ${domain.state}`);
+    console.log(`  Type: ${domain.type}`);
+
+    if (domain.state !== 'active') {
+      console.log(`  WARNING - Domain state is "${domain.state}", not "active".`);
+      console.log('  -> Go to Mailgun and verify your DNS records for this domain.');
+    }
+    console.log();
+    return domain.state === 'active';
   } catch (err) {
-    console.log(`  FAIL - Cannot resolve ${SMTP_HOST}: ${err.message}`);
-    console.log('  -> Check /etc/resolv.conf or try: dig smtp.gmail.com\n');
+    console.log(`  FAIL - Network error: ${err.message}`);
+    console.log('  -> Check that outbound HTTPS (port 443) is not blocked.\n');
     return false;
   }
 }
 
-// Step 2: TCP connectivity (is the port blocked by DO firewall?)
-async function testTCP() {
-  console.log('--- Step 2: TCP Connection (port blocking check) ---');
-  return new Promise((resolve) => {
-    const socket = new net.Socket();
-    const timeout = setTimeout(() => {
-      socket.destroy();
-      console.log(`  FAIL - Connection to ${SMTP_HOST}:${SMTP_PORT} timed out after 10s`);
-      console.log('  -> DigitalOcean blocks port 25 by default.');
-      console.log('  -> Port 587 should work. Port 465 (SSL) is also an option.');
-      console.log('  -> Check your DO firewall rules and ensure outbound traffic on this port is allowed.\n');
-      resolve(false);
-    }, 10000);
-
-    socket.connect(SMTP_PORT, SMTP_HOST, () => {
-      clearTimeout(timeout);
-      socket.destroy();
-      console.log(`  OK - TCP connection to ${SMTP_HOST}:${SMTP_PORT} succeeded\n`);
-      resolve(true);
-    });
-
-    socket.on('error', (err) => {
-      clearTimeout(timeout);
-      console.log(`  FAIL - TCP connection error: ${err.message}`);
-      console.log('  -> If ECONNREFUSED or ETIMEDOUT, the port may be blocked by DO firewall.');
-      console.log('  -> Try port 465 with secure:true, or submit a DO support ticket to unblock SMTP.\n');
-      resolve(false);
-    });
-  });
-}
-
-// Step 3: Nodemailer transporter.verify()
-async function testVerify() {
-  console.log('--- Step 3: SMTP Auth (transporter.verify) ---');
-  const transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_PORT === 465,
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-    // Extra debug options
-    logger: true,
-    debug: true,
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 15000,
-  });
-
+// Step 2: Check domain DNS verification status
+async function testDNS() {
+  console.log('--- Step 2: Check Domain DNS Records ---');
   try {
-    await transporter.verify();
-    console.log('  OK - SMTP authentication successful\n');
-    return transporter;
-  } catch (err) {
-    console.log(`  FAIL - ${err.message}`);
-    if (err.message.includes('Invalid login') || err.code === 'EAUTH') {
-      console.log('  -> Gmail: Make sure you are using an App Password, not your account password.');
-      console.log('  -> Generate one at: https://myaccount.google.com/apppasswords');
+    const res = await fetch(`https://api.mailgun.net/v3/domains/${MAILGUN_DOMAIN}/verify`, {
+      method: 'PUT',
+      headers: { Authorization: authHeader },
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      console.log(`  FAIL (${res.status}): ${body}\n`);
+      return false;
     }
-    if (err.message.includes('ETIMEDOUT') || err.message.includes('ECONNREFUSED')) {
-      console.log('  -> The SMTP port is likely blocked. See Step 2 suggestions.');
+
+    const data = await res.json();
+    const d = data.domain;
+
+    const records = [
+      { name: 'SPF', status: d.spam_action ? 'configured' : 'check manually' },
+    ];
+
+    // Check sending vs receiving DNS
+    const sending = data.sending_dns_records || [];
+    const receiving = data.receiving_dns_records || [];
+
+    console.log('  Sending DNS records:');
+    for (const r of sending) {
+      const status = r.valid === 'valid' ? 'OK' : 'MISSING/INVALID';
+      console.log(`    ${status} - ${r.record_type} ${r.name} → ${r.value?.slice(0, 60)}...`);
     }
-    if (err.message.includes('self-signed') || err.message.includes('certificate')) {
-      console.log('  -> TLS certificate issue. Try adding tls: { rejectUnauthorized: false } (not ideal for prod).');
+
+    console.log('  Receiving DNS records:');
+    for (const r of receiving) {
+      const status = r.valid === 'valid' ? 'OK' : 'MISSING/INVALID (optional)';
+      console.log(`    ${status} - ${r.record_type} ${r.name}`);
+    }
+
+    const allSendingValid = sending.every(r => r.valid === 'valid');
+    if (!allSendingValid) {
+      console.log('\n  WARNING - Some sending DNS records are not verified.');
+      console.log('  -> Add the records above in DigitalOcean → Networking → Domains → chorho.com');
+      console.log('  -> DNS propagation can take up to 48 hours (usually minutes).');
+    } else {
+      console.log('\n  OK - All sending DNS records verified.');
     }
     console.log();
-    return null;
+    return allSendingValid;
+  } catch (err) {
+    console.log(`  FAIL - ${err.message}\n`);
+    return false;
   }
 }
 
-// Step 4: Actually send a test email
-async function testSend(transporter) {
-  console.log('--- Step 4: Send Test Email ---');
+// Step 3: Send a test email
+async function testSend() {
+  console.log('--- Step 3: Send Test Email ---');
   try {
-    const info = await transporter.sendMail({
-      from: EMAIL_FROM,
-      to: TEST_RECIPIENT,
-      subject: 'Chorho Test Email - ' + new Date().toISOString(),
-      text: 'If you see this, email delivery from the droplet is working!',
-      html: '<h2>It works!</h2><p>Email delivery from the DigitalOcean droplet is working correctly.</p><p>Sent at: ' + new Date().toISOString() + '</p>',
+    const form = new URLSearchParams();
+    form.append('from', EMAIL_FROM);
+    form.append('to', TEST_RECIPIENT);
+    form.append('subject', 'Chorho Mailgun Test - ' + new Date().toISOString());
+    form.append('text', 'If you see this, Mailgun email delivery from the droplet is working!');
+    form.append('html', '<h2>It works!</h2><p>Mailgun email delivery from the DigitalOcean droplet is working.</p><p>Sent at: ' + new Date().toISOString() + '</p>');
+
+    const res = await fetch(`${MAILGUN_BASE_URL}/messages`, {
+      method: 'POST',
+      headers: { Authorization: authHeader },
+      body: form,
     });
-    console.log(`  OK - Email sent! MessageId: ${info.messageId}`);
-    console.log(`  Accepted: ${info.accepted}`);
-    console.log(`  Rejected: ${info.rejected}\n`);
+
+    if (!res.ok) {
+      const body = await res.text();
+      console.log(`  FAIL (${res.status}): ${body}`);
+      if (res.status === 403) {
+        console.log('  -> Your domain may not be verified, or you are on a free plan');
+        console.log('     and the recipient is not in your Authorized Recipients list.');
+        console.log('  -> Free plan: add recipients at Mailgun → Sending → Overview → Authorized Recipients.');
+      }
+      console.log();
+      return false;
+    }
+
+    const data = await res.json();
+    console.log(`  OK - ${data.message}`);
+    console.log(`  ID: ${data.id}\n`);
     return true;
   } catch (err) {
     console.log(`  FAIL - ${err.message}\n`);
@@ -127,73 +150,27 @@ async function testSend(transporter) {
   }
 }
 
-// Also test port 465 as a fallback diagnostic
-async function testAlternatePort() {
-  const altPort = SMTP_PORT === 465 ? 587 : 465;
-  console.log(`--- Bonus: TCP check on alternate port ${altPort} ---`);
-  return new Promise((resolve) => {
-    const socket = new net.Socket();
-    const timeout = setTimeout(() => {
-      socket.destroy();
-      console.log(`  Port ${altPort} timed out (also blocked)\n`);
-      resolve(false);
-    }, 10000);
-
-    socket.connect(altPort, SMTP_HOST, () => {
-      clearTimeout(timeout);
-      socket.destroy();
-      console.log(`  Port ${altPort} is reachable — consider switching if your current port is blocked\n`);
-      resolve(true);
-    });
-
-    socket.on('error', () => {
-      clearTimeout(timeout);
-      console.log(`  Port ${altPort} is not reachable either\n`);
-      resolve(false);
-    });
-  });
-}
-
-// Run all tests
+// Run all
 (async () => {
+  const apiOk = await testApiKey();
+  if (!apiOk) {
+    console.log('Stopping early — fix your API key or domain first.');
+    process.exit(1);
+  }
+
   const dnsOk = await testDNS();
-  if (!dnsOk) {
-    console.log('Stopping early — DNS failed. Fix DNS first.');
-    process.exit(1);
-  }
+  // DNS warning is non-fatal — Mailgun may still send (just might land in spam)
 
-  const tcpOk = await testTCP();
-  if (!tcpOk) {
-    await testAlternatePort();
-    console.log('Stopping early — TCP connection failed. The port is likely blocked.');
-    console.log('\nDigitalOcean SMTP tips:');
-    console.log('  1. Port 25 is blocked on all new droplets (anti-spam).');
-    console.log('  2. Port 587 (STARTTLS) usually works for services like Gmail.');
-    console.log('  3. Port 465 (implicit TLS) is another option.');
-    console.log('  4. If both 587 and 465 are blocked, open a DO support ticket to request unblocking.');
-    console.log('  5. Alternative: use an email API (SendGrid, Mailgun, Resend) over HTTPS (port 443) instead of SMTP.');
-    process.exit(1);
-  }
-
-  const transporter = await testVerify();
-  if (!transporter) {
-    console.log('Stopping early — SMTP auth failed.');
-    process.exit(1);
-  }
-
-  const sent = await testSend(transporter);
+  const sent = await testSend();
 
   console.log('=== Summary ===');
-  console.log(`  DNS:       OK`);
-  console.log(`  TCP:       OK`);
-  console.log(`  SMTP Auth: OK`);
-  console.log(`  Send:      ${sent ? 'OK' : 'FAILED'}`);
+  console.log(`  API Key & Domain: OK`);
+  console.log(`  DNS Records:      ${dnsOk ? 'OK' : 'INCOMPLETE (emails may go to spam)'}`);
+  console.log(`  Send:             ${sent ? 'OK' : 'FAILED'}`);
   console.log();
 
   if (sent) {
-    console.log('Everything works! Check the inbox of ' + TEST_RECIPIENT);
-  } else {
-    console.log('Sending failed despite a good connection. Check the error above.');
+    console.log('Check the inbox (and spam folder) of ' + TEST_RECIPIENT);
   }
 
   process.exit(sent ? 0 : 1);
