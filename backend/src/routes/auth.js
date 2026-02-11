@@ -13,6 +13,10 @@ router.post('/register', async (req, res) => {
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
     }
+    if (name.length > 100) return res.status(400).json({ error: 'Name must be 100 characters or less' });
+    if (email.length > 254) return res.status(400).json({ error: 'Email must be 254 characters or less' });
+    if (password.length > 128) return res.status(400).json({ error: 'Password must be 128 characters or less' });
+    if (groupName && groupName.length > 100) return res.status(400).json({ error: 'Group name must be 100 characters or less' });
 
     const existingUser = User.findByEmail(email);
     if (existingUser) {
@@ -63,6 +67,8 @@ router.post('/login', async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
+    if (email.length > 254) return res.status(400).json({ error: 'Email must be 254 characters or less' });
+    if (password.length > 128) return res.status(400).json({ error: 'Password must be 128 characters or less' });
 
     const user = User.findByEmail(email);
     if (!user) {
@@ -106,13 +112,14 @@ router.post('/forgot-password', async (req, res) => {
 
     const rawToken = PasswordReset.create(user.id);
     const resetUrl = `${process.env.APP_URL}/reset-password?token=${rawToken}`;
+    const safeName = user.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
     await sendEmail({
       to: user.email,
       subject: 'Chorho - Password Reset',
       html: `
         <h2>Password Reset</h2>
-        <p>Hi ${user.name},</p>
+        <p>Hi ${safeName},</p>
         <p>You requested a password reset for your Chorho account.</p>
         <p><a href="${resetUrl}" style="display:inline-block;padding:12px 24px;background-color:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">Reset Password</a></p>
         <p>Or copy this link: ${resetUrl}</p>
@@ -140,6 +147,7 @@ router.post('/reset-password', async (req, res) => {
     if (newPassword.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
+    if (newPassword.length > 128) return res.status(400).json({ error: 'Password must be 128 characters or less' });
 
     const resetRecord = PasswordReset.findValidToken(token);
     if (!resetRecord) {

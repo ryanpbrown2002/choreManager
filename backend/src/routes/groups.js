@@ -38,6 +38,7 @@ router.patch('/', requireAdmin, (req, res) => {
     if (!name) {
       return res.status(400).json({ error: 'Group name is required' });
     }
+    if (name.length > 100) return res.status(400).json({ error: 'Group name must be 100 characters or less' });
 
     Group.update(req.groupId, { name });
 
@@ -56,6 +57,7 @@ router.patch('/notification-message', requireAdmin, (req, res) => {
     if (!message || !message.trim()) {
       return res.status(400).json({ error: 'Notification message is required' });
     }
+    if (message.length > 500) return res.status(400).json({ error: 'Notification message must be 500 characters or less' });
 
     Group.updateNotificationMessage(req.groupId, message.trim());
 

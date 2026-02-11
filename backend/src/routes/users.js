@@ -53,6 +53,9 @@ router.patch('/:id', requireSameUser, (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    if (name && name.length > 100) return res.status(400).json({ error: 'Name must be 100 characters or less' });
+    if (email && email.length > 254) return res.status(400).json({ error: 'Email must be 254 characters or less' });
+
     User.update(req.params.id, { name, email });
 
     const updated = User.findById(req.params.id);
@@ -71,6 +74,9 @@ router.patch('/:id/password', requireSameUser, async (req, res) => {
 
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ error: 'Current and new password required' });
+    }
+    if (currentPassword.length > 128 || newPassword.length > 128) {
+      return res.status(400).json({ error: 'Password must be 128 characters or less' });
     }
 
     const user = User.findById(req.params.id);

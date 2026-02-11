@@ -110,9 +110,11 @@ export default function Settings() {
             <textarea
               value={notificationMessage}
               onChange={(e) => setNotificationMessage(e.target.value)}
+              maxLength={500}
               rows={3}
               className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{notificationMessage.length}/500</p>
             <div className="flex items-center gap-3 mt-3">
               <button
                 onClick={handleSaveNotificationMessage}

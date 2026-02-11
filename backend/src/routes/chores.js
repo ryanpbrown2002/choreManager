@@ -43,6 +43,7 @@ router.post('/', requireAdmin, (req, res) => {
     if (!name || !frequency) {
       return res.status(400).json({ error: 'Name and frequency are required' });
     }
+    if (name.length > 100) return res.status(400).json({ error: 'Chore name must be 100 characters or less' });
 
     const validFrequencies = ['daily', 'weekly', 'biweekly', 'monthly'];
     if (!validFrequencies.includes(frequency)) {
@@ -79,6 +80,7 @@ router.patch('/:id', requireAdmin, (req, res) => {
     }
 
     const { name, frequency, requiresPhoto, orderNum } = req.body;
+    if (name && name.length > 100) return res.status(400).json({ error: 'Chore name must be 100 characters or less' });
 
     Chore.update(req.params.id, {
       name,
