@@ -50,16 +50,17 @@ router.patch('/', requireAdmin, (req, res) => {
   }
 });
 
+const ALLOWED_MESSAGE_KEYS = ['friendly', 'direct', 'urgent'];
+
 router.patch('/notification-message', requireAdmin, (req, res) => {
   try {
     const { message } = req.body;
 
-    if (!message || !message.trim()) {
-      return res.status(400).json({ error: 'Notification message is required' });
+    if (!message || !ALLOWED_MESSAGE_KEYS.includes(message)) {
+      return res.status(400).json({ error: 'Invalid notification message selection' });
     }
-    if (message.length > 500) return res.status(400).json({ error: 'Notification message must be 500 characters or less' });
 
-    Group.updateNotificationMessage(req.groupId, message.trim());
+    Group.updateNotificationMessage(req.groupId, message);
 
     const updated = Group.findById(req.groupId);
     res.json(updated);

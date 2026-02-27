@@ -14,9 +14,15 @@ export default function Settings() {
   const { group, updateNotificationMessage } = useGroup();
   const { members, updateRole, deleteMember, updateRotation, notifyMembers } = useMembers();
   const { chores, createChore, updateChore, deleteChore, reorderChores } = useChores();
-  const [notificationMessage, setNotificationMessage] = useState('');
+  const [selectedMessageKey, setSelectedMessageKey] = useState('friendly');
   const [savingMessage, setSavingMessage] = useState(false);
   const [messageSaved, setMessageSaved] = useState(false);
+
+  const PRESET_MESSAGES = [
+    { key: 'friendly', label: 'Friendly', text: 'Hey {name}, just a friendly reminder that you have chores to complete this week!' },
+    { key: 'direct', label: 'Direct', text: 'Hi {name}, please make sure to get your chores done soon. Thanks!' },
+    { key: 'urgent', label: 'Urgent', text: '{name}, you have outstanding chores that need to be completed ASAP.' },
+  ];
 
   // Profile editing state
   const [editingField, setEditingField] = useState(null); // 'name', 'email', 'password'
@@ -75,7 +81,7 @@ export default function Settings() {
 
   useEffect(() => {
     if (group?.notification_message) {
-      setNotificationMessage(group.notification_message);
+      setSelectedMessageKey(group.notification_message);
     }
   }, [group?.notification_message]);
 
@@ -83,7 +89,7 @@ export default function Settings() {
     setSavingMessage(true);
     setMessageSaved(false);
     try {
-      await updateNotificationMessage(notificationMessage);
+      await updateNotificationMessage(selectedMessageKey);
       setMessageSaved(true);
       setTimeout(() => setMessageSaved(false), 3000);
     } catch (err) {
@@ -279,16 +285,28 @@ export default function Settings() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
             <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Notification Message</h2>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-3">
-              Customize the email message sent when notifying members about their chores. Use <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{'{name}'}</code> to insert the member's name.
+              Choose the email message sent when notifying members about their chores.
             </p>
-            <textarea
-              value={notificationMessage}
-              onChange={(e) => setNotificationMessage(e.target.value)}
-              maxLength={500}
-              rows={3}
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{notificationMessage.length}/500</p>
+            <div className="space-y-2">
+              {PRESET_MESSAGES.map((preset) => (
+                <button
+                  key={preset.key}
+                  onClick={() => setSelectedMessageKey(preset.key)}
+                  className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
+                    selectedMessageKey === preset.key
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                  }`}
+                >
+                  <span className={`text-sm font-medium ${
+                    selectedMessageKey === preset.key
+                      ? 'text-blue-700 dark:text-blue-400'
+                      : 'text-gray-900 dark:text-white'
+                  }`}>{preset.label}</span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{preset.text}</p>
+                </button>
+              ))}
+            </div>
             <div className="flex items-center gap-3 mt-3">
               <button
                 onClick={handleSaveNotificationMessage}

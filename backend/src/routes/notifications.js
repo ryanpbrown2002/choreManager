@@ -7,6 +7,12 @@ const router = express.Router();
 
 router.use(authenticate);
 
+const PRESET_MESSAGES = {
+  friendly: 'Hey {name}, just a friendly reminder that you have chores to complete this week!',
+  direct: 'Hi {name}, please make sure to get your chores done soon. Thanks!',
+  urgent: '{name}, you have outstanding chores that need to be completed ASAP.',
+};
+
 function escapeHtml(str) {
   return str
     .replace(/&/g, '&amp;')
@@ -43,8 +49,8 @@ router.post('/send', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'No members to notify' });
     }
 
-    const messageTemplate = group.notification_message ||
-      'Hey {name}, just a friendly reminder that you have chores to complete this week!';
+    const messageKey = group.notification_message || 'friendly';
+    const messageTemplate = PRESET_MESSAGES[messageKey] || PRESET_MESSAGES.friendly;
 
     lastNotifyByGroup.set(req.groupId, Date.now());
 
